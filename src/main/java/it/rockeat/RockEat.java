@@ -9,8 +9,6 @@ import org.apache.commons.collections.CollectionUtils;
 
 public class RockEat {
 	
-	// http://www.rockit.it/nicolocarnesi/album/gli-eroi-non-escono-il-sabato/18316
-	
 	public static void run(String url) {
 		RockEater rockEater = new RockEater();
 		try {

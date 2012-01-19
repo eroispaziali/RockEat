@@ -21,11 +21,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,6 +45,8 @@ public class RockEater {
 	public static final String SAVE_PATH = "";
 
 	private HttpClient httpClient;
+	private Long tracksCounter = 0L;
+	private Long bytesDownloaded = 0L;
 	
 	public RockEater() {
 		this.httpClient = new DefaultHttpClient();
@@ -64,7 +69,9 @@ public class RockEater {
 	
 	private void httpDownload(Track track, OutputStream out) throws ClientProtocolException, IOException {
 		HttpPost request = new HttpPost(track.getUrl());
-		request.getParams().setParameter("rockitID", generateRockitId(track));
+		List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+		qparams.add(new BasicNameValuePair("rockitID", generateRockitId(track)));
+		request.setEntity(new UrlEncodedFormEntity(qparams));
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity responseEntity = response.getEntity();
 		responseEntity.writeTo(out); 
@@ -139,7 +146,7 @@ public class RockEater {
 						track.setOrder(index);
 						tracks.add(track);
 					} catch (Exception e) {
-						System.out.println("Impossibile ottenere informazioni sulla traccia");
+						System.out.println("RockEat non è riuscito ad ottenere informazioni sulla traccia");
 					}
 				}
 			}
@@ -156,18 +163,17 @@ public class RockEater {
 		File fileOnDisk = new File(filePath);
 		System.out.print("[" + track.getUrl() + "] --> [" + filename + "] : ");
 		Boolean success = false;
-		Long sizeOf = 0L;
 		try {
-			sizeOf = FileUtils.sizeOf(fileOnDisk);
 			if (FileUtils.sizeOf(fileOnDisk) == 0) {
 				FileUtils.deleteQuietly(fileOnDisk);
 				success = false;
 			} else {
 				success = true;
-				System.out.println(FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(fileOnDisk)) + " scaricati");
+				bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
+				tracksCounter++;
 			}
 		} catch (IllegalArgumentException e ) {	}
-		System.out.println((success? Long.toString(sizeOf) + " bytes" : "FAIL"));
+		System.out.println((success? FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(fileOnDisk)) + " scaricati" : "FAIL"));
 	}
 	
 	public String generateFilename(Album album, Track track) {
@@ -186,12 +192,12 @@ public class RockEater {
 		if (CollectionUtils.isNotEmpty(tracks)) {
 			for(Track track : tracks) {
 				try {
-					//System.out.println(HashHelper.hash(track.getUrl() + track.getTitle() + track.getAlbum()));
 					download(track, generateFilename(album, track));
 				} catch (Exception e) {
-					e.printStackTrace();
+					System.out.println("RockEat non riesce a scaricare questa traccia, la salterà");
 				} 
 			}
+			System.out.println("RockEater ha scaricato " + tracksCounter + " e le ha mangiate tutte");
 		}
 	}
 	
