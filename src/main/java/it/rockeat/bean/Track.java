@@ -1,7 +1,5 @@
 package it.rockeat.bean;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class Track {
 	
 	private Integer order;
@@ -9,7 +7,7 @@ public class Track {
 	private String title;
 	private String url;
 	private String album;
-	private String artist;
+	private String author;
 	
 	public Track() {
 		super();
@@ -39,23 +37,22 @@ public class Track {
 		this.album = album;
 	}
 	
-	public String toString() {
-		String st = StringUtils.EMPTY;
-		st += "id: " + id + "\n";
-		st += "titolo: " + title + "\n";
-		st += "url: " + url;
-		return st;
-	}
 	public Integer getOrder() {
 		return order;
 	}
 	public void setOrder(Integer order) {
 		this.order = order;
 	}
-	public String getArtist() {
-		return artist;
+	public String getAuthor() {
+		return author;
 	}
-	public void setArtist(String artist) {
-		this.artist = artist;
+	public void setAuthor(String author) {
+		this.author = author;
 	}
+	
+	public String toString() {
+		String string = "\"" + title + "\" di " + author; 
+		return string;
+	}
+	
 }

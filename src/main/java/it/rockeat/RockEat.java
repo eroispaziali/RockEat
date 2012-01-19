@@ -3,6 +3,7 @@ package it.rockeat;
 import it.rockeat.bean.Album;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 import org.apache.commons.collections.CollectionUtils;
 
@@ -12,7 +13,6 @@ public class RockEat {
 	public static void run(String url) {
 		RockEater rockEater = new RockEater();
 		try {
-			System.out.println("RockEat sta cercando da mangiare su " + url);
 			Album album = rockEater.parse(url);
 			if (CollectionUtils.isNotEmpty(album.getTracks())) {
 				System.out.println("RockEat ha trovato un album: " + album.toString());
@@ -20,8 +20,10 @@ public class RockEat {
 			} else {
 				System.out.println("RockEat non ha trovato niente da mangiare");
 			}
+		} catch (MalformedURLException e) {
+			System.out.println("RockEat vorrebbe scaricarti della musica, ma ha bisogno di un indirizzo valido");
 		} catch (IOException e) {
-			System.out.println("RockEat non riesce a collegarsi alla pagina");
+			System.out.println("RockEat è dispiaciuto perché non riesce a collegarsi alla pagina");
 		}
 	}
 	
@@ -29,7 +31,7 @@ public class RockEat {
 		if (args!=null && args.length>0) {
 			run(args[0]);
 		} else {
-			System.out.println("Occorre specificare un indirizzo URL");
+			System.out.println("RockEat non sa cosa fare");
 		}
 	}
 

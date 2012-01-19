@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +41,8 @@ import com.google.gson.Gson;
 public class RockEater {
 	
 	public static final String JSON_BASE_URL = "http://www.rockit.it/web/include/ajax.play.php?id=";
-	public static final String TRACK_EL_SELECT_EXPRESSION = "ul.items li.play a";
-	public static final String ALBUM_DATA_EL_SELECT_EXPRESSION = "div.datialbum";
-	public static final String TITLE_ARTIST_SEPARATOR = " - ";
-	public static final String SAVE_PATH = "";
+	public static final String PARSING_TRACK_SELECTECTION_EXPRESSION = "ul.items li.play a";
+	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
 
 	private HttpClient httpClient;
 	private Long tracksCounter = 0L;
@@ -80,7 +80,7 @@ public class RockEater {
 	private Track getTrackFromJson(InputStream jsonStream) {
 		String json = streamToString(jsonStream);
 		Gson gson = new Gson();
-		Track track = gson.fromJson(json, Track.class);  
+		Track track = gson.fromJson(json, Track.class);
 		return track;
 	}
 	
@@ -99,7 +99,22 @@ public class RockEater {
 		}
 	}
 	
-	public Album parse(String url) throws IOException {
+	private Track lookupTrack(String id) throws ClientProtocolException, IOException {
+		HttpPost request = new HttpPost(JSON_BASE_URL);
+		List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+		qparams.add(new BasicNameValuePair("id", id));
+		request.setEntity(new UrlEncodedFormEntity(qparams));
+		HttpResponse response = httpClient.execute(request);
+		HttpEntity responseEntity = response.getEntity();
+		InputStream trackInformation = responseEntity.getContent(); 
+		Track track = getTrackFromJson(trackInformation);
+		return track;
+	}
+	
+	public Album parse(String url) throws IOException, MalformedURLException {
+		@SuppressWarnings("unused")
+		URL urlForValidationOnly = new URL(url);
+		System.out.println("RockEat sta cercando da mangiare su " + url);
 		Album album = new Album();
 		String albumTitle = StringUtils.EMPTY;
 		String albumArtist = StringUtils.EMPTY;
@@ -109,30 +124,13 @@ public class RockEater {
 		Elements title = doc.select("title");
 		if (CollectionUtils.isNotEmpty(title)) {
 			String meta = title.get(0).text();
-			albumTitle = StringUtils.trim(StringUtils.substringBefore(meta, TITLE_ARTIST_SEPARATOR));
-			albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, TITLE_ARTIST_SEPARATOR));
+			albumTitle = StringUtils.trim(StringUtils.substringBefore(meta, PARSING_TITLE_ARTIST_SEPARATOR));
+			albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, PARSING_TITLE_ARTIST_SEPARATOR));
 			album.setArtist(albumArtist);
 			album.setTitle(albumTitle);
 		}
-		Elements albumDataEl = doc.select(ALBUM_DATA_EL_SELECT_EXPRESSION);
-		if (CollectionUtils.isNotEmpty(albumDataEl)) {
-			for (Element dataEl : albumDataEl) {
-				
-				if (dataEl.hasClass("anno")) {
-					album.setYear(StringUtils.trim(dataEl.text()));
-				}
-				
-				if (dataEl.hasClass("etichette")) {
-					album.setLabel(StringUtils.trim(dataEl.text()));
-				}
-				
-				if (dataEl.hasClass("genere")) {
-					album.setGenre(StringUtils.trim(dataEl.text()));
-				}
-			}
-		}
 		
-		Elements playlistEl = doc.select(TRACK_EL_SELECT_EXPRESSION);
+		Elements playlistEl = doc.select(PARSING_TRACK_SELECTECTION_EXPRESSION);
 		Integer index = 0;
 		if (CollectionUtils.isNotEmpty(playlistEl)) {
 			for (Element trackEl:playlistEl) {
@@ -140,8 +138,10 @@ public class RockEater {
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						index++;
+						/*
 						InputStream jsonStream = httpGet(JSON_BASE_URL + trackId);
-						Track track = getTrackFromJson(jsonStream);
+						Track track = getTrackFromJson(jsonStream);*/
+						Track track = lookupTrack(trackId);
 						track.setId(trackId);
 						track.setOrder(index);
 						tracks.add(track);
@@ -155,49 +155,67 @@ public class RockEater {
 		return album;
 	}
 	
-	public void download(Track track, String filename) throws IOException, FileNotFoundException {
-		String filePath = SAVE_PATH +  filename; 
+	private void download(Track track, String filename) throws IOException, FileNotFoundException {
+		System.out.print("RockEat sta scaricando " + track.toString() + "... ");
+		String filePath = filename; 
 		OutputStream file = new FileOutputStream(filePath);
 		httpDownload(track,file);
 		file.close();
 		File fileOnDisk = new File(filePath);
-		System.out.print("[" + track.getUrl() + "] --> [" + filename + "] : ");
 		Boolean success = false;
 		try {
 			if (FileUtils.sizeOf(fileOnDisk) == 0) {
-				FileUtils.deleteQuietly(fileOnDisk);
 				success = false;
+				FileUtils.deleteQuietly(fileOnDisk);
 			} else {
 				success = true;
 				bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
 				tracksCounter++;
 			}
 		} catch (IllegalArgumentException e ) {	}
-		System.out.println((success? FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(fileOnDisk)) + " scaricati" : "FAIL"));
+		System.out.println((success? "" : "niente da fare"));
 	}
 	
-	public String generateFilename(Album album, Track track) {
-		String remoteFilename = StringUtils.substringAfterLast(track.getUrl(), "/");
-		String baseFilename = track.getTitle().replaceAll("[^a-zA-Z0-9 ]+","");
-		baseFilename = baseFilename.replace(" ","_");
+	private String generateFilename(Album album, Track track) {
+		String filenameOnServer = StringUtils.substringAfterLast(track.getUrl(), "/");
+		String songTitle = StringUtils.trim(track.getTitle());
+		Integer howManyDigits = StringUtils.length(Integer.toString(CollectionUtils.size(album.getTracks())));
 		String filename =
-				StringUtils.right("00" + Integer.toString(track.getOrder()), 2)
-				+ "-" + FilenameUtils.normalize(baseFilename) 
-				+ "." + FilenameUtils.getExtension(remoteFilename);
+				StringUtils.leftPad(Integer.toString(track.getOrder()), howManyDigits, "0")
+				+ " - " + FilenameUtils.normalize(songTitle) 
+				+ "." + FilenameUtils.getExtension(filenameOnServer);
 		return filename;
+	}
+	
+	private String createFolder(Album album) {
+		try {
+			String folderPath = FilenameUtils.normalize(album.getArtist() + " - " + album.getTitle());
+			FileUtils.forceMkdir(new File(folderPath));
+			return folderPath + "/";
+		} catch (IOException e) {
+			return "";
+		}
 	}
 	
 	public void download(Album album) {
 		List<Track> tracks = album.getTracks();
 		if (CollectionUtils.isNotEmpty(tracks)) {
-			for(Track track : tracks) {
+			String folderName = createFolder(album);
+			for(Track track:tracks) {
 				try {
-					download(track, generateFilename(album, track));
+					String filePath = folderName + generateFilename(album, track); 
+					download(track, filePath);
 				} catch (Exception e) {
-					System.out.println("RockEat non riesce a scaricare questa traccia, la salterà");
+					System.out.println("oops");
 				} 
 			}
-			System.out.println("RockEater ha scaricato " + tracksCounter + " e le ha mangiate tutte");
+
+			String message = (tracksCounter>0) 
+					? "RockEat ha scaricato " + tracksCounter + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piaceranno"
+					: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
+			
+			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
+			System.out.println(message);
 		}
 	}
 	
