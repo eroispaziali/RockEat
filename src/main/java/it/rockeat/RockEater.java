@@ -2,6 +2,7 @@ package it.rockeat;
 
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
+import it.rockeat.util.HashHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,9 +37,9 @@ public class RockEater {
 	
 	public static final String JSON_BASE_URL = "http://www.rockit.it/web/include/ajax.play.php?id=";
 	public static final String TRACK_EL_SELECT_EXPRESSION = "ul.items li.play a";
-	public static final String ALBUM_DATA_EL_SELECT_EXPRESSION = ".datialbum";
+	public static final String ALBUM_DATA_EL_SELECT_EXPRESSION = "div.datialbum";
 	public static final String TITLE_ARTIST_SEPARATOR = " - ";
-	public static final String SAVE_PATH = ""; //"/home/lorenzo/test/";
+	public static final String SAVE_PATH = "";
 
 	private HttpClient httpClient;
 	
@@ -57,20 +58,13 @@ public class RockEater {
 		return responseEntity.getContent(); 
 	}
 	
-	private void httpDownload(String url, OutputStream out) throws ClientProtocolException, IOException {
-		HttpPost request = new HttpPost(url);
-		request.addHeader("host", "ww2.rockit.it");
-		request.addHeader("User-Agent","User-Agent	Mozilla/5.0 (X11; Linux i686; rv:9.0.1) Gecko/20100101 Firefox/9.0.1");
-		request.addHeader("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-		request.addHeader("Accept-Language","it-it,it;q=0.8,en-us;q=0.5,en;q=0.3");
-		request.addHeader("Accept-Encoding", "gzip, deflate");
-		request.addHeader("Accept-Charset","ISO-8859-1,utf-8;q=0.7,*;q=0.7");
-		request.addHeader("Connection", "keep-alive");
-		request.addHeader("Cookie","__utma=267845901.1025768614.1326885158.1326885158.1326924297.2; __utmz=267845901.1326885158.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmb=267845901.58.9.1326927390837; __utmc=267845901");
-		request.addHeader("Referer","http");
-		request.addHeader("Content-Type", "application/x-www-form-urlencoded");
-		//request.addHeader("Content-Length", "41");
-		request.getParams().setParameter("rockitID", "d6b1f9a1773b5b614722d6aeb55f49cc");
+	private String generateRockitId(Track track) {
+		return HashHelper.md5(track.getUrl() + "-daisyduke");
+	}
+	
+	private void httpDownload(Track track, OutputStream out) throws ClientProtocolException, IOException {
+		HttpPost request = new HttpPost(track.getUrl());
+		request.getParams().setParameter("rockitID", generateRockitId(track));
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity responseEntity = response.getEntity();
 		responseEntity.writeTo(out); 
@@ -154,19 +148,13 @@ public class RockEater {
 		return album;
 	}
 	
-	
-	public void download(String url) throws IOException, FileNotFoundException {
-		String remoteFilename = StringUtils.substringAfterLast(url, "/");
-		download(url,remoteFilename);
-	}
-	
-	public void download(String url, String filename) throws IOException, FileNotFoundException {
-		String filePath = SAVE_PATH +  filename; // StringUtils.substringAfterLast(url, "/") 
+	public void download(Track track, String filename) throws IOException, FileNotFoundException {
+		String filePath = SAVE_PATH +  filename; 
 		OutputStream file = new FileOutputStream(filePath);
-		httpDownload(url,file);
+		httpDownload(track,file);
 		file.close();
 		File fileOnDisk = new File(filePath);
-		System.out.print("["+url+"] --> [" + filename + "] : ");
+		System.out.print("[" + track.getUrl() + "] --> [" + filename + "] : ");
 		Boolean success = false;
 		Long sizeOf = 0L;
 		try {
@@ -199,7 +187,7 @@ public class RockEater {
 			for(Track track : tracks) {
 				try {
 					//System.out.println(HashHelper.hash(track.getUrl() + track.getTitle() + track.getAlbum()));
-					download(track.getUrl(), generateFilename(album, track));
+					download(track, generateFilename(album, track));
 				} catch (Exception e) {
 					e.printStackTrace();
 				} 

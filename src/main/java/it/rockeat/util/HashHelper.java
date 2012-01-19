@@ -4,7 +4,7 @@ import java.security.MessageDigest;
 
 public class HashHelper {
 
-	public static String toHex(byte[] bytes) {
+	private static String toHex(byte[] bytes) {
 		String hex = "0123456789abcdef";
 		String result = "";
 
@@ -16,7 +16,7 @@ public class HashHelper {
 	}
 
 	
-	public static String hash(String string) {
+	public static String md5(String string) {
 		if (string == null) {
 			return null;
 		}
