@@ -40,7 +40,7 @@ import com.google.gson.Gson;
 
 public class RockEater {
 	
-	public static final String JSON_BASE_URL = "http://www.rockit.it/web/include/ajax.play.php?id=";
+	public static final String URL_TRACK_LOOKUP = "http://www.rockit.it/web/include/ajax.play.php";
 	public static final String PARSING_TRACK_SELECTECTION_EXPRESSION = "ul.items li.play a";
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
 
@@ -100,7 +100,7 @@ public class RockEater {
 	}
 	
 	private Track lookupTrack(String id) throws ClientProtocolException, IOException {
-		HttpPost request = new HttpPost(JSON_BASE_URL);
+		HttpPost request = new HttpPost(URL_TRACK_LOOKUP);
 		List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 		qparams.add(new BasicNameValuePair("id", id));
 		request.setEntity(new UrlEncodedFormEntity(qparams));
@@ -112,8 +112,10 @@ public class RockEater {
 	}
 	
 	public Album parse(String url) throws IOException, MalformedURLException {
+
 		@SuppressWarnings("unused")
 		URL urlForValidationOnly = new URL(url);
+		
 		System.out.println("RockEat sta cercando da mangiare su " + url);
 		Album album = new Album();
 		String albumTitle = StringUtils.EMPTY;
@@ -124,8 +126,13 @@ public class RockEater {
 		Elements title = doc.select("title");
 		if (CollectionUtils.isNotEmpty(title)) {
 			String meta = title.get(0).text();
-			albumTitle = StringUtils.trim(StringUtils.substringBefore(meta, PARSING_TITLE_ARTIST_SEPARATOR));
-			albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, PARSING_TITLE_ARTIST_SEPARATOR));
+			if (StringUtils.contains(meta, PARSING_TITLE_ARTIST_SEPARATOR)) {
+				albumTitle = StringUtils.trim(StringUtils.substringBefore(meta, PARSING_TITLE_ARTIST_SEPARATOR));
+				albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, PARSING_TITLE_ARTIST_SEPARATOR));
+			} else {
+				albumArtist = meta;
+				albumTitle = "";
+			}
 			album.setArtist(albumArtist);
 			album.setTitle(albumTitle);
 		}
@@ -138,9 +145,6 @@ public class RockEater {
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						index++;
-						/*
-						InputStream jsonStream = httpGet(JSON_BASE_URL + trackId);
-						Track track = getTrackFromJson(jsonStream);*/
 						Track track = lookupTrack(trackId);
 						track.setId(trackId);
 						track.setOrder(index);
@@ -189,8 +193,13 @@ public class RockEater {
 	
 	private String createFolder(Album album) {
 		try {
-			String folderPath = FilenameUtils.normalize(album.getArtist() + " - " + album.getTitle());
-			FileUtils.forceMkdir(new File(folderPath));
+			String folderPath = StringUtils.EMPTY;
+			if (StringUtils.isNotBlank(album.getArtist()) && StringUtils.isNotBlank(album.getTitle())) {
+				folderPath = album.getArtist() + " - " + album.getTitle();
+			} else {
+				folderPath = StringUtils.trim(album.getArtist() + " " + album.getTitle());
+			}
+			FileUtils.forceMkdir(new File(FilenameUtils.normalize(folderPath)));
 			return folderPath + "/";
 		} catch (IOException e) {
 			return "";
@@ -213,7 +222,6 @@ public class RockEater {
 			String message = (tracksCounter>0) 
 					? "RockEat ha scaricato " + tracksCounter + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piaceranno"
 					: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
-			
 			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
 			System.out.println(message);
 		}

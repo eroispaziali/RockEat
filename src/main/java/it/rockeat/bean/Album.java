@@ -3,6 +3,7 @@ package it.rockeat.bean;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class Album {
 	
@@ -50,6 +51,13 @@ public class Album {
 		this.genre = genre;
 	}
 	public String toString() {
-		return "\"" + title + "\" di " + artist + " ("+ CollectionUtils.size(tracks) + " canzoni)";
+		String st = "";
+		if (StringUtils.isNotBlank(title)) {
+			st += "\"" + title + "\"";
+		} else {
+			st += "qualche canzone";
+		}
+		st += " di " + artist + " ("+ CollectionUtils.size(tracks) + " canzoni)";
+		return st;
 	}
 }

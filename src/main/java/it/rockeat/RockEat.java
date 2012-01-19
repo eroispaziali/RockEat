@@ -15,10 +15,10 @@ public class RockEat {
 		try {
 			Album album = rockEater.parse(url);
 			if (CollectionUtils.isNotEmpty(album.getTracks())) {
-				System.out.println("RockEat ha trovato un album: " + album.toString());
+				System.out.println("RockEat ha trovato " + album.toString());
 				rockEater.download(album);
 			} else {
-				System.out.println("RockEat non ha trovato niente da mangiare");
+				System.out.println("RockEat non ha trovato niente. Ricorda: RockEat mangia solo roba italiana");
 			}
 		} catch (MalformedURLException e) {
 			System.out.println("RockEat vorrebbe scaricarti della musica, ma ha bisogno di un indirizzo valido");
