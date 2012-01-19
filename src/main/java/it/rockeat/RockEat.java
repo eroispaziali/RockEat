@@ -31,9 +31,8 @@ public class RockEat {
 		if (args!=null && args.length>0) {
 			run(args[0]);
 		} else {
-			System.out.println("Specificare un indirizzo RockIt");
+			System.out.println("Occorre specificare un indirizzo URL");
 		}
-		//System.out.println("Esecuzione terminata");
 	}
 
 }

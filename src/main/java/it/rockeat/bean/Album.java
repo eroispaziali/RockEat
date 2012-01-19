@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.collections.CollectionUtils;
 
 public class Album {
+	
 	private String title;
 	private String artist;
 	private String label;
@@ -48,9 +49,7 @@ public class Album {
 	public void setGenre(String genre) {
 		this.genre = genre;
 	}
-	
 	public String toString() {
 		return "\"" + title + "\" di " + artist + " ("+ CollectionUtils.size(tracks) + " canzoni)";
 	}
-	
 }
