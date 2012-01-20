@@ -220,10 +220,10 @@ public class RockEater {
 			}
 
 			String message = (tracksCounter>0) 
-					? "RockEat ha scaricato " + tracksCounter + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piaceranno"
+					? "RockEat ha scaricato " + tracksCounter + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
 					: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
 			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
-			System.out.println(message);
+			System.out.println(message + "\n");
 		}
 	}
 	
