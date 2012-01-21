@@ -2,11 +2,14 @@ package it.rockeat;
 
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
+import it.rockeat.exception.ConnectionException;
+import it.rockeat.exception.FileWriteException;
+import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.util.HashHelper;
+import it.rockeat.util.Id3TaggingUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,11 +23,11 @@ import java.util.List;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
@@ -40,13 +43,16 @@ import com.google.gson.Gson;
 
 public class RockEater {
 	
-	public static final String URL_TRACK_LOOKUP = "http://www.rockit.it/web/include/ajax.play.php";
+	public static final String URL_TRACK_LOOKUP = "/web/include/ajax.play.php";
 	public static final String PARSING_TRACK_SELECTECTION_EXPRESSION = "ul.items li.play a";
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
+	public static final String TOKEN_PARAM = "rockitID";
 
 	private HttpClient httpClient;
-	private Long tracksCounter = 0L;
+	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
+	
+	private Boolean id3TaggingEnabled = Boolean.TRUE;
 	
 	public RockEater() {
 		this.httpClient = new DefaultHttpClient();
@@ -56,25 +62,33 @@ public class RockEater {
 		this.httpClient = customHttpClient;
 	}
 	
-	private InputStream httpGet(String url) throws ClientProtocolException, IOException {
-		HttpGet httpget = new HttpGet(url);
-		HttpResponse response = httpClient.execute(httpget);
-		HttpEntity responseEntity = response.getEntity();
-		return responseEntity.getContent(); 
+	private InputStream httpGet(String url) throws ConnectionException {
+		try {
+			HttpGet httpget = new HttpGet(url);
+			HttpResponse response = httpClient.execute(httpget);
+			HttpEntity responseEntity = response.getEntity();
+			return responseEntity.getContent();
+		} catch (IOException e) {
+			throw new ConnectionException(e);
+		}
 	}
 	
-	private String generateRockitId(Track track) {
+	private String generateToken(Track track) {
 		return HashHelper.md5(track.getUrl() + "-daisyduke");
 	}
 	
-	private void httpDownload(Track track, OutputStream out) throws ClientProtocolException, IOException {
-		HttpPost request = new HttpPost(track.getUrl());
-		List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-		qparams.add(new BasicNameValuePair("rockitID", generateRockitId(track)));
-		request.setEntity(new UrlEncodedFormEntity(qparams));
-		HttpResponse response = httpClient.execute(request);
-		HttpEntity responseEntity = response.getEntity();
-		responseEntity.writeTo(out); 
+	private void httpDownload(Track track, OutputStream out) throws ConnectionException {
+		try {
+			HttpPost request = new HttpPost(track.getUrl());
+			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+			qparams.add(new BasicNameValuePair(TOKEN_PARAM, generateToken(track)));
+			request.setEntity(new UrlEncodedFormEntity(qparams));
+			HttpResponse response = httpClient.execute(request);
+			HttpEntity responseEntity = response.getEntity();
+			responseEntity.writeTo(out);
+		} catch (IOException e) {
+			throw new ConnectionException(e);
+		}
 	}
 	
 	private Track getTrackFromJson(InputStream jsonStream) {
@@ -99,22 +113,28 @@ public class RockEater {
 		}
 	}
 	
-	private Track lookupTrack(String id) throws ClientProtocolException, IOException {
-		HttpPost request = new HttpPost(URL_TRACK_LOOKUP);
-		List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-		qparams.add(new BasicNameValuePair("id", id));
-		request.setEntity(new UrlEncodedFormEntity(qparams));
-		HttpResponse response = httpClient.execute(request);
-		HttpEntity responseEntity = response.getEntity();
-		InputStream trackInformation = responseEntity.getContent(); 
-		Track track = getTrackFromJson(trackInformation);
-		return track;
+	private Track lookupTrack(String id, String lookupUrl) throws ConnectionException {
+		try {
+			HttpPost request = new HttpPost(lookupUrl);
+			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+			qparams.add(new BasicNameValuePair("id", id));
+			request.setEntity(new UrlEncodedFormEntity(qparams));
+			HttpResponse response = httpClient.execute(request);
+			HttpEntity responseEntity = response.getEntity();
+			InputStream trackInformation = responseEntity.getContent(); 
+			Track track = getTrackFromJson(trackInformation);
+			String cleanedTitle = track.getTitle();
+			track.setTitle(StringUtils.isNotBlank(cleanedTitle) ? cleanedTitle.replaceAll(" +", " ") : cleanedTitle);
+			return track;
+		} catch (IOException e) {
+			throw new ConnectionException(e);
+		}
 	}
 	
-	public Album parse(String url) throws IOException, MalformedURLException {
+	public Album parse(String url) throws MalformedURLException, ConnectionException {
 
-		@SuppressWarnings("unused")
-		URL urlForValidationOnly = new URL(url);
+		URL parsedUrl = new URL(url);
+		String baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost();
 		
 		System.out.println("RockEat sta cercando da mangiare su " + url);
 		Album album = new Album();
@@ -145,11 +165,11 @@ public class RockEater {
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						index++;
-						Track track = lookupTrack(trackId);
+						Track track = lookupTrack(trackId, baseUrl + URL_TRACK_LOOKUP);
 						track.setId(trackId);
 						track.setOrder(index);
 						tracks.add(track);
-					} catch (Exception e) {
+					} catch (ConnectionException e) {
 						System.out.println("RockEat non è riuscito ad ottenere informazioni sulla traccia");
 					}
 				}
@@ -159,25 +179,31 @@ public class RockEater {
 		return album;
 	}
 	
-	private void download(Track track, String filename) throws IOException, FileNotFoundException {
+	private File download(Track track, String filename) throws ConnectionException, FileWriteException {
 		System.out.print("RockEat sta scaricando " + track.toString() + "... ");
 		String filePath = filename; 
-		OutputStream file = new FileOutputStream(filePath);
-		httpDownload(track,file);
-		file.close();
-		File fileOnDisk = new File(filePath);
-		Boolean success = false;
 		try {
-			if (FileUtils.sizeOf(fileOnDisk) == 0) {
-				success = false;
-				FileUtils.deleteQuietly(fileOnDisk);
-			} else {
-				success = true;
-				bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
-				tracksCounter++;
-			}
-		} catch (IllegalArgumentException e ) {	}
-		System.out.println((success? "" : "niente da fare"));
+			OutputStream file = new FileOutputStream(filePath);
+			httpDownload(track,file);
+			file.close();
+			File fileOnDisk = new File(filePath);
+			Boolean success = false;
+			try {
+				if (FileUtils.sizeOf(fileOnDisk) == 0) {
+					success = false;
+					FileUtils.deleteQuietly(fileOnDisk);
+				} else {
+					success = true;
+					bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
+					downloadedTracks++;
+				}
+			} catch (IllegalArgumentException e ) {	}
+			System.out.println((success? "" : "niente da fare"));
+			return fileOnDisk;
+			
+		} catch (IOException e) {
+			throw new FileWriteException(e);
+		}
 	}
 	
 	private String generateFilename(Album album, Track track) {
@@ -213,18 +239,32 @@ public class RockEater {
 			for(Track track:tracks) {
 				try {
 					String filePath = folderName + generateFilename(album, track); 
-					download(track, filePath);
+					File downloadedFile = download(track, filePath);
+					if (BooleanUtils.isTrue(id3TaggingEnabled)) {
+						try {
+							Id3TaggingUtils.id3Tag(album, track, downloadedFile);
+						} catch (Id3TaggingException e) {}
+					}
 				} catch (Exception e) {
 					System.out.println("oops");
 				} 
 			}
 
-			String message = (tracksCounter>0) 
-					? "RockEat ha scaricato " + tracksCounter + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
-					: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
+			String message = (downloadedTracks>0)
+				? "Rockeat ha scaricato " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
+				: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
+			
 			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
-			System.out.println(message + "\n");
+			System.out.println(message);
 		}
+	}
+
+	public Boolean getId3TaggingEnabled() {
+		return id3TaggingEnabled;
+	}
+
+	public void setId3TaggingEnabled(Boolean id3TaggingEnabled) {
+		this.id3TaggingEnabled = id3TaggingEnabled;
 	}
 	
 }
