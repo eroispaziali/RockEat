@@ -51,6 +51,7 @@ public class RockEater {
 
 	private HttpClient httpClient;
 	private Long parsedTracks = 0L;
+	private Long downloadedAlbums = 0L;
 	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
 	
@@ -212,6 +213,7 @@ public class RockEater {
 		List<Track> tracks = album.getTracks();
 		if (CollectionUtils.isNotEmpty(tracks)) {
 			String folderName = FileManagementUtils.createFolder(album);
+			Integer count = 0;
 			for ( Track track : tracks ) {
 				try {
 					System.out.print("RockEat sta scaricando " + track.toString() + "... ");
@@ -222,6 +224,7 @@ public class RockEater {
 							Id3TaggingUtils.id3Tag(album, track, file);
 						} catch (Id3TaggingException e) {}
 					}
+					count++;
 					System.out.println("");
 				} catch (FileSaveException e) {
 					System.out.println("non riesce a salvare il file. Disco pieno?");
@@ -231,11 +234,14 @@ public class RockEater {
 					System.out.println("niente da fare");
 				}
 			}
-
-			String message = (downloadedTracks>0)
-				? "RockEat ha scaricato " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
-				: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
 			
+			if (count.equals(CollectionUtils.size(album.getTracks()))) {
+				downloadedAlbums++;
+			}
+			
+			String message = (downloadedTracks>0)
+				? "RockEat ha scaricato " + Long.toString(downloadedAlbums) + " album, per un totale di " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
+				: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
 			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
 			System.out.println(message);
 		}
@@ -259,6 +265,10 @@ public class RockEater {
 
 	public Long getBytesDownloaded() {
 		return bytesDownloaded;
+	}
+
+	public Long getDownloadedAlbums() {
+		return downloadedAlbums;
 	}
 	
 }

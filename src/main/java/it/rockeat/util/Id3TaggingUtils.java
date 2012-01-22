@@ -5,6 +5,7 @@ import it.rockeat.bean.Track;
 import it.rockeat.exception.Id3TaggingException;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -14,7 +15,10 @@ import com.mpatric.mp3agic.ID3Wrapper;
 import com.mpatric.mp3agic.ID3v1Tag;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.ID3v23Tag;
+import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
+import com.mpatric.mp3agic.NotSupportedException;
+import com.mpatric.mp3agic.UnsupportedTagException;
 
 public class Id3TaggingUtils {
 	
@@ -38,12 +42,15 @@ public class Id3TaggingUtils {
 	}
 	
 	public static void id3Tag(Album album, Track track, File fileOnDisk) throws Id3TaggingException {
+		String originalFilename = fileOnDisk.getAbsolutePath();
+		String temporaryFilename =
+				FilenameUtils.getFullPath(fileOnDisk.getAbsolutePath()) + 
+				FilenameUtils.getBaseName(fileOnDisk.getName()) + "_tmp." + FilenameUtils.getExtension(fileOnDisk.getName());
+
+		File temporaryFile = new File(temporaryFilename);
+		File originalFile = new File(originalFilename);
+
 		try {
-			String originalFilename = fileOnDisk.getAbsolutePath();
-			String taggedFilename =
-					FilenameUtils.getFullPath(fileOnDisk.getAbsolutePath()) + 
-					FilenameUtils.getBaseName(fileOnDisk.getName()) + "_tmp." + FilenameUtils.getExtension(fileOnDisk.getName());
-			
 			Mp3File mp3file = new Mp3File(fileOnDisk.getAbsolutePath());
 			cleanupTags(mp3file);
 			ID3v2 tag = mp3file.getId3v2Tag();
@@ -51,18 +58,28 @@ public class Id3TaggingUtils {
 			tag.setArtist(track.getAuthor());
 			tag.setTitle(track.getTitle());
 			tag.setTrack(Integer.toString(track.getOrder()));
-			// tag.setComment(album.getUrl());
 			mp3file.setId3v2Tag(tag);
-			mp3file.save(taggedFilename);
+			mp3file.save(temporaryFilename);
 			
 			// Replace with the new file
-			File taggedFile = new File(taggedFilename);
-			File originalFile = new File(originalFilename);
 			FileUtils.deleteQuietly(fileOnDisk);
-			FileUtils.moveFile(taggedFile, originalFile);
+			FileUtils.moveFile(temporaryFile, originalFile);
 
-		} catch (Exception e) {
+		} catch (IOException e) {
+			FileUtils.deleteQuietly(temporaryFile);
 			throw new Id3TaggingException();
+		} catch (InvalidDataException e) {
+			FileUtils.deleteQuietly(temporaryFile);
+			throw new Id3TaggingException();
+		} catch (NotSupportedException e) {
+			FileUtils.deleteQuietly(temporaryFile);
+			throw new Id3TaggingException();
+		} catch (UnsupportedTagException e) {
+			FileUtils.deleteQuietly(temporaryFile);
+			throw new Id3TaggingException();
+		} catch (Exception e) {
+			FileUtils.deleteQuietly(temporaryFile);
+			throw new Id3TaggingException();			
 		}
 	}
 
