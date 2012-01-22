@@ -28,7 +28,6 @@ public class Id3TaggingUtils {
 		newId3Wrapper.setAlbum(StringUtils.trim(oldId3Wrapper.getAlbum()));
 		newId3Wrapper.setYear(StringUtils.trim(oldId3Wrapper.getYear()));
 		newId3Wrapper.setGenre(oldId3Wrapper.getGenre());
-		newId3Wrapper.setComment("RockEat");
 		newId3Wrapper.setComposer(StringUtils.trim(oldId3Wrapper.getComposer()));
 		newId3Wrapper.setOriginalArtist(StringUtils.trim(oldId3Wrapper.getOriginalArtist()));
 		newId3Wrapper.setCopyright(StringUtils.trim(oldId3Wrapper.getCopyright()));
@@ -37,7 +36,6 @@ public class Id3TaggingUtils {
 		mp3file.setId3v1Tag(newId3Wrapper.getId3v1Tag());
 		mp3file.setId3v2Tag(newId3Wrapper.getId3v2Tag());
 	}
-	
 	
 	public static void id3Tag(Album album, Track track, File fileOnDisk) throws Id3TaggingException {
 		try {
@@ -53,6 +51,7 @@ public class Id3TaggingUtils {
 			tag.setArtist(track.getAuthor());
 			tag.setTitle(track.getTitle());
 			tag.setTrack(Integer.toString(track.getOrder()));
+			// tag.setComment(album.getUrl());
 			mp3file.setId3v2Tag(tag);
 			mp3file.save(taggedFilename);
 			

@@ -12,16 +12,15 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.collections.CollectionUtils;
 
-
 public class RockEat {
 	
-	private static final String TAGGING_DISABLE = "noid3";
+	private static final String OPTION_DISABLE_TAGGING = "noid3";
 	
 	public static void main(String[] args) {
 		
 		// Command-line options
 		Options options = new Options();
-		options.addOption(TAGGING_DISABLE, false, "disabilita il tagging ID3 delle tracce");
+		options.addOption(OPTION_DISABLE_TAGGING, false, "disabilita il tagging ID3 delle tracce");
 
 		RockEater rockEater = new RockEater();
 		CommandLineParser parser = new GnuParser();
@@ -30,7 +29,7 @@ public class RockEat {
 	        CommandLine line = parser.parse(options,args);
 
 	        // Configuration according to CL
-	        rockEater.setId3TaggingEnabled(!line.hasOption(TAGGING_DISABLE));
+	        rockEater.setId3TaggingEnabled(!line.hasOption(OPTION_DISABLE_TAGGING));
 	        
 			Album album = rockEater.parse(args[0]);
 			if (CollectionUtils.isNotEmpty(album.getTracks())) {

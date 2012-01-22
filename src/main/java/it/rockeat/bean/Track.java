@@ -1,5 +1,7 @@
 package it.rockeat.bean;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Track {
 	
 	private Integer order;
@@ -26,6 +28,9 @@ public class Track {
 	}
 	public String getUrl() {
 		return url;
+	}
+	public String getRemoteFilename() {
+		return StringUtils.substringAfterLast(url, "/");
 	}
 	public void setUrl(String url) {
 		this.url = url;

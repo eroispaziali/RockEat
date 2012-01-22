@@ -3,8 +3,10 @@ package it.rockeat;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
 import it.rockeat.exception.ConnectionException;
-import it.rockeat.exception.FileWriteException;
+import it.rockeat.exception.DownloadException;
+import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
+import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.HashHelper;
 import it.rockeat.util.Id3TaggingUtils;
 
@@ -22,7 +24,6 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -49,6 +50,7 @@ public class RockEater {
 	public static final String TOKEN_PARAM = "rockitID";
 
 	private HttpClient httpClient;
+	private Long parsedTracks = 0L;
 	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
 	
@@ -113,6 +115,12 @@ public class RockEater {
 		}
 	}
 	
+	private static Track cleanup(Track track) {
+		String cleanedTitle = track.getTitle();
+		track.setTitle(StringUtils.isNotBlank(cleanedTitle) ? StringUtils.trim(cleanedTitle.replaceAll(" +", " ")) : cleanedTitle);
+		return track;
+	}
+	
 	private Track lookupTrack(String id, String lookupUrl) throws ConnectionException {
 		try {
 			HttpPost request = new HttpPost(lookupUrl);
@@ -122,9 +130,7 @@ public class RockEater {
 			HttpResponse response = httpClient.execute(request);
 			HttpEntity responseEntity = response.getEntity();
 			InputStream trackInformation = responseEntity.getContent(); 
-			Track track = getTrackFromJson(trackInformation);
-			String cleanedTitle = track.getTitle();
-			track.setTitle(StringUtils.isNotBlank(cleanedTitle) ? cleanedTitle.replaceAll(" +", " ") : cleanedTitle);
+			Track track = cleanup(getTrackFromJson(trackInformation));
 			return track;
 		} catch (IOException e) {
 			throw new ConnectionException(e);
@@ -136,7 +142,7 @@ public class RockEater {
 		URL parsedUrl = new URL(url);
 		String baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost();
 		
-		System.out.println("RockEat sta cercando da mangiare su " + url);
+		System.out.println("RockEat sta annusando " + url);
 		Album album = new Album();
 		String albumTitle = StringUtils.EMPTY;
 		String albumArtist = StringUtils.EMPTY;
@@ -151,23 +157,25 @@ public class RockEater {
 				albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, PARSING_TITLE_ARTIST_SEPARATOR));
 			} else {
 				albumArtist = meta;
-				albumTitle = "";
+				albumTitle = StringUtils.EMPTY;
 			}
 			album.setArtist(albumArtist);
 			album.setTitle(albumTitle);
+			album.setUrl(url);
 		}
 		
 		Elements playlistEl = doc.select(PARSING_TRACK_SELECTECTION_EXPRESSION);
-		Integer index = 0;
+		Integer trackNumber = 0;
 		if (CollectionUtils.isNotEmpty(playlistEl)) {
 			for (Element trackEl:playlistEl) {
 				String trackId = trackEl.attr("rel");
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
-						index++;
+						parsedTracks++;
+						trackNumber++;
 						Track track = lookupTrack(trackId, baseUrl + URL_TRACK_LOOKUP);
 						track.setId(trackId);
-						track.setOrder(index);
+						track.setOrder(trackNumber);
 						tracks.add(track);
 					} catch (ConnectionException e) {
 						System.out.println("RockEat non è riuscito ad ottenere informazioni sulla traccia");
@@ -179,79 +187,53 @@ public class RockEater {
 		return album;
 	}
 	
-	private File download(Track track, String filename) throws ConnectionException, FileWriteException {
-		System.out.print("RockEat sta scaricando " + track.toString() + "... ");
+	private File download(Track track, String filename) throws ConnectionException, DownloadException, FileSaveException {
 		String filePath = filename; 
 		try {
 			OutputStream file = new FileOutputStream(filePath);
 			httpDownload(track,file);
 			file.close();
 			File fileOnDisk = new File(filePath);
-			Boolean success = false;
-			try {
-				if (FileUtils.sizeOf(fileOnDisk) == 0) {
-					success = false;
-					FileUtils.deleteQuietly(fileOnDisk);
-				} else {
-					success = true;
-					bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
-					downloadedTracks++;
-				}
-			} catch (IllegalArgumentException e ) {	}
-			System.out.println((success? "" : "niente da fare"));
-			return fileOnDisk;
+			if (FileUtils.sizeOf(fileOnDisk) == 0) {
+				FileUtils.deleteQuietly(fileOnDisk);
+				throw new DownloadException();
+			} else {
+				bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
+				downloadedTracks++;
+				return fileOnDisk;
+			}
 			
 		} catch (IOException e) {
-			throw new FileWriteException(e);
-		}
-	}
-	
-	private String generateFilename(Album album, Track track) {
-		String filenameOnServer = StringUtils.substringAfterLast(track.getUrl(), "/");
-		String songTitle = StringUtils.trim(track.getTitle());
-		Integer howManyDigits = StringUtils.length(Integer.toString(CollectionUtils.size(album.getTracks())));
-		String filename =
-				StringUtils.leftPad(Integer.toString(track.getOrder()), howManyDigits, "0")
-				+ " - " + FilenameUtils.normalize(songTitle) 
-				+ "." + FilenameUtils.getExtension(filenameOnServer);
-		return filename;
-	}
-	
-	private String createFolder(Album album) {
-		try {
-			String folderPath = StringUtils.EMPTY;
-			if (StringUtils.isNotBlank(album.getArtist()) && StringUtils.isNotBlank(album.getTitle())) {
-				folderPath = album.getArtist() + " - " + album.getTitle();
-			} else {
-				folderPath = StringUtils.trim(album.getArtist() + " " + album.getTitle());
-			}
-			FileUtils.forceMkdir(new File(FilenameUtils.normalize(folderPath)));
-			return folderPath + "/";
-		} catch (IOException e) {
-			return "";
+			throw new FileSaveException(e);
 		}
 	}
 	
 	public void download(Album album) {
 		List<Track> tracks = album.getTracks();
 		if (CollectionUtils.isNotEmpty(tracks)) {
-			String folderName = createFolder(album);
-			for(Track track:tracks) {
+			String folderName = FileManagementUtils.createFolder(album);
+			for ( Track track : tracks ) {
 				try {
-					String filePath = folderName + generateFilename(album, track); 
-					File downloadedFile = download(track, filePath);
+					System.out.print("RockEat sta scaricando " + track.toString() + "... ");
+					String filePath = folderName + FileManagementUtils.createFilename(album, track); 
+					File file = download(track, filePath);
 					if (BooleanUtils.isTrue(id3TaggingEnabled)) {
 						try {
-							Id3TaggingUtils.id3Tag(album, track, downloadedFile);
+							Id3TaggingUtils.id3Tag(album, track, file);
 						} catch (Id3TaggingException e) {}
 					}
-				} catch (Exception e) {
-					System.out.println("oops");
-				} 
+					System.out.println("");
+				} catch (FileSaveException e) {
+					System.out.println("non riesce a salvare il file. Disco pieno?");
+				} catch (ConnectionException e) {
+					System.out.println("niente da fare");
+				} catch (DownloadException e) {
+					System.out.println("niente da fare");
+				}
 			}
 
 			String message = (downloadedTracks>0)
-				? "Rockeat ha scaricato " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
+				? "RockEat ha scaricato " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
 				: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
 			
 			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
@@ -265,6 +247,18 @@ public class RockEater {
 
 	public void setId3TaggingEnabled(Boolean id3TaggingEnabled) {
 		this.id3TaggingEnabled = id3TaggingEnabled;
+	}
+
+	public Long getParsedTracks() {
+		return parsedTracks;
+	}
+
+	public Long getDownloadedTracks() {
+		return downloadedTracks;
+	}
+
+	public Long getBytesDownloaded() {
+		return bytesDownloaded;
 	}
 	
 }

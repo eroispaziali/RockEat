@@ -19,9 +19,9 @@ import org.apache.http.params.HttpProtocolParams;
 
 public class HttpClientFactory {
 	
-	private final static String  httpUserAgent = "Mozilla/5.0 (X11; Linux i686; rv:9.0.1) Gecko/20100101 Firefox/9.0.1";
-	private final static Integer httpMaxRedirects = 10;
-	private final static Boolean httpAllowCircularRedirects = Boolean.FALSE;
+	private final static String  UserAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.X.Y.Z Safari/525.13";
+	private final static Integer MaxRedirects = 10;
+	private final static Boolean AllowCircularRedirects = Boolean.FALSE;
 	private final static Integer httpConnectionTimeout = 10000;
 	private final static Integer httpSocketTimeout = 10000;
 	
@@ -30,10 +30,10 @@ public class HttpClientFactory {
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
         HttpProtocolParams.setContentCharset(params, "UTF-8");
         HttpProtocolParams.setUseExpectContinue(params, true);
-        HttpProtocolParams.setUserAgent(params, httpUserAgent);
+        HttpProtocolParams.setUserAgent(params, UserAgent);
         params.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
-	    params.setIntParameter(ClientPNames.MAX_REDIRECTS, httpMaxRedirects);
-	    params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, httpAllowCircularRedirects);
+	    params.setIntParameter(ClientPNames.MAX_REDIRECTS, MaxRedirects);
+	    params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, AllowCircularRedirects);
 	    params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, httpSocketTimeout);
 	    params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, httpConnectionTimeout);
 	    

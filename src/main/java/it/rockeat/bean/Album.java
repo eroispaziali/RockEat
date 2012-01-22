@@ -13,6 +13,7 @@ public class Album {
 	private String year;
 	private String genre;
 	private List<Track> tracks;
+	private String url;
 	
 	public String getTitle() {
 		return title;
@@ -59,5 +60,11 @@ public class Album {
 		}
 		st += " di " + artist + " ("+ CollectionUtils.size(tracks) + " canzoni)";
 		return st;
+	}
+	public String getUrl() {
+		return url;
+	}
+	public void setUrl(String url) {
+		this.url = url;
 	}
 }
