@@ -178,11 +178,11 @@ public class RockEater {
 				}
 			} 
 			
-			String out = "RockEat ha concluso la sua ricerca"; 
-			out += "\n - Pagine effettivamente analizzate: " + (CollectionUtils.size(urls)-urlErrors-connectionErrors);
-			out += "\n - Errori di connessione: " + connectionErrors;
-			out += "\n - Album trovati: " + CollectionUtils.size(albums);
-			out += "\n - Tracce totali: " + tracksCount;
+			String out = "RockEat è riuscito ad analizzare " + (CollectionUtils.size(urls)-urlErrors-connectionErrors) + " pagine";
+			if (connectionErrors>0) {  
+				out += " (ci sono stati " + connectionErrors + " errori di connessione)";
+			}
+			out += " e ha trovato " + CollectionUtils.size(albums) + " album (" + tracksCount + " tracce in totale)";
 			
 			System.out.println(out);
 			
@@ -198,6 +198,13 @@ public class RockEater {
 					download(album);
 				}
 			}
+			
+			String message = (downloadedTracks>0)
+					? "RockEat ha scaricato " + Long.toString(downloadedAlbums) + " album, per un totale di " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
+					: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
+				System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
+				System.out.println(message);
+
 		}
 		
 	}
@@ -321,12 +328,6 @@ public class RockEater {
 			if (count.equals(CollectionUtils.size(album.getTracks()))) {
 				downloadedAlbums++;
 			}
-			
-			String message = (downloadedTracks>0)
-				? "RockEat ha scaricato " + Long.toString(downloadedAlbums) + " album, per un totale di " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
-				: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
-			System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
-			System.out.println(message);
 		}
 	}
 
