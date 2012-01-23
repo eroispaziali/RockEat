@@ -6,9 +6,13 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
+import it.rockeat.exception.ParsingException;
+import it.rockeat.http.HttpClientFactory;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.HashHelper;
 import it.rockeat.util.Id3TaggingUtils;
+import it.rockeat.util.ParsingUtils;
+import it.rockeat.util.ProxySettings;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,26 +53,32 @@ public class RockEater {
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
 	public static final String TOKEN_PARAM = "rockitID";
 
-	private HttpClient httpClient;
+	private ProxySettings proxySettings;
+	
 	private Long parsedTracks = 0L;
 	private Long downloadedAlbums = 0L;
 	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
 	
+	/* Options */
 	private Boolean id3TaggingEnabled = Boolean.TRUE;
+	private Boolean downloadEnabled = Boolean.TRUE;
+	private Boolean showInfoEnabled = Boolean.FALSE;
 	
-	public RockEater() {
-		this.httpClient = new DefaultHttpClient();
-	}
-	
-	public RockEater(HttpClient customHttpClient) {
-		this.httpClient = customHttpClient;
+	private HttpClient getHttpClient() {
+		HttpClient httpclient = null;
+		if (proxySettings!=null) {
+			httpclient = HttpClientFactory.createInstance(proxySettings.getHost(), proxySettings.getCredentials());
+		} else {
+			httpclient = new DefaultHttpClient();
+		}
+		return httpclient;
 	}
 	
 	private InputStream httpGet(String url) throws ConnectionException {
 		try {
 			HttpGet httpget = new HttpGet(url);
-			HttpResponse response = httpClient.execute(httpget);
+			HttpResponse response = getHttpClient().execute(httpget);
 			HttpEntity responseEntity = response.getEntity();
 			return responseEntity.getContent();
 		} catch (IOException e) {
@@ -86,7 +96,7 @@ public class RockEater {
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair(TOKEN_PARAM, generateToken(track)));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
-			HttpResponse response = httpClient.execute(request);
+			HttpResponse response = getHttpClient().execute(request);
 			HttpEntity responseEntity = response.getEntity();
 			responseEntity.writeTo(out);
 		} catch (IOException e) {
@@ -128,7 +138,7 @@ public class RockEater {
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair("id", id));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
-			HttpResponse response = httpClient.execute(request);
+			HttpResponse response = getHttpClient().execute(request);
 			HttpEntity responseEntity = response.getEntity();
 			InputStream trackInformation = responseEntity.getContent(); 
 			Track track = cleanup(getTrackFromJson(trackInformation));
@@ -138,32 +148,73 @@ public class RockEater {
 		}
 	}
 	
-	public Album parse(String url) throws MalformedURLException, ConnectionException {
+	public void process(String url) {
+		List<String> urls = new ArrayList<String>();
+		urls.add(url);
+		process(urls);
+	}
 
+	public void process(List<String> urls) {
+		
+		List<Album> albums = new ArrayList<Album>();
+		if (CollectionUtils.isNotEmpty(urls)) {
+
+			/* Parsing */
+			System.out.println("RockEat sta cercando qualcosa da mangiare...");
+			Integer tracksCount = 0, connectionErrors = 0, parsingErrors = 0, urlErrors = 0;
+			for (String url:urls) {
+				try {
+					Album album = parse(url);
+					if (CollectionUtils.isNotEmpty(album.getTracks())) {
+						tracksCount += album.getTracksCount();
+						albums.add(album);
+					} 
+				} catch (MalformedURLException e) {
+					urlErrors++;
+				} catch (ConnectionException e) {
+					connectionErrors++;
+				} catch (ParsingException e) {
+					parsingErrors++;
+				}
+			} 
+			
+			String out = "RockEat ha concluso la sua ricerca"; 
+			out += "\n - Pagine effettivamente analizzate: " + (CollectionUtils.size(urls)-urlErrors-connectionErrors);
+			out += "\n - Errori di connessione: " + connectionErrors;
+			out += "\n - Album trovati: " + CollectionUtils.size(albums);
+			out += "\n - Tracce totali: " + tracksCount;
+			
+			System.out.println(out);
+			
+			/* Show info */
+			if (BooleanUtils.isTrue(showInfoEnabled)) {
+				/* TODO: mostrare info */
+				
+			}
+			
+			/* Download */
+			if (BooleanUtils.isTrue(downloadEnabled) && CollectionUtils.isNotEmpty(albums)) {
+				for (Album album:albums) {
+					download(album);
+				}
+			}
+		}
+		
+	}
+	
+	private Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException {
+
+		url = ParsingUtils.addProtocolPrefixIfMissing(url);
+		
 		URL parsedUrl = new URL(url);
 		String baseUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost();
 		
-		System.out.println("RockEat sta annusando " + url);
 		Album album = new Album();
 		String albumTitle = StringUtils.EMPTY;
 		String albumArtist = StringUtils.EMPTY;
 		InputStream pageStream = httpGet(url);
 		List<Track> tracks = new ArrayList<Track>();
 		Document doc = Jsoup.parse(streamToString(pageStream));
-		Elements title = doc.select("title");
-		if (CollectionUtils.isNotEmpty(title)) {
-			String meta = title.get(0).text();
-			if (StringUtils.contains(meta, PARSING_TITLE_ARTIST_SEPARATOR)) {
-				albumTitle = StringUtils.trim(StringUtils.substringBefore(meta, PARSING_TITLE_ARTIST_SEPARATOR));
-				albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, PARSING_TITLE_ARTIST_SEPARATOR));
-			} else {
-				albumArtist = meta;
-				albumTitle = StringUtils.EMPTY;
-			}
-			album.setArtist(albumArtist);
-			album.setTitle(albumTitle);
-			album.setUrl(url);
-		}
 		
 		Elements playlistEl = doc.select(PARSING_TRACK_SELECTECTION_EXPRESSION);
 		Integer trackNumber = 0;
@@ -179,13 +230,32 @@ public class RockEater {
 						track.setOrder(trackNumber);
 						tracks.add(track);
 					} catch (ConnectionException e) {
-						System.out.println("RockEat non è riuscito ad ottenere informazioni sulla traccia");
+						System.out.println("RockEat non è riuscito ad ottenere informazioni sulla traccia " + trackId);
 					}
 				}
 			}
+			
+			Elements title = doc.select("title");
+			if (CollectionUtils.isNotEmpty(title)) {
+				String meta = title.get(0).text();
+				if (StringUtils.contains(meta, PARSING_TITLE_ARTIST_SEPARATOR)) {
+					albumTitle = StringUtils.trim(StringUtils.substringBefore(meta, PARSING_TITLE_ARTIST_SEPARATOR));
+					albumArtist = StringUtils.trim(StringUtils.substringAfter(meta, PARSING_TITLE_ARTIST_SEPARATOR));
+				} else {
+					albumArtist = meta;
+					albumTitle = StringUtils.EMPTY;
+				}
+				album.setArtist(albumArtist);
+				album.setTitle(albumTitle);
+				album.setUrl(url);
+			}
+			album.setTracks(tracks);
+			return album;
+		} else {
+			/* Nothing found */
+			throw new ParsingException();
 		}
-		album.setTracks(tracks);
-		return album;
+		
 	}
 	
 	private File download(Track track, String filename) throws ConnectionException, DownloadException, FileSaveException {
@@ -209,9 +279,22 @@ public class RockEater {
 		}
 	}
 	
-	public void download(Album album) {
+	public void showInfo(Album album) {
 		List<Track> tracks = album.getTracks();
 		if (CollectionUtils.isNotEmpty(tracks)) {
+			Integer count = 0;
+			for (Track track:tracks) {
+				count++;
+				Integer howManyDigits = StringUtils.length(Integer.toString(CollectionUtils.size(album.getTracks())));
+				String trackNumber = StringUtils.leftPad(Integer.toString(track.getOrder()), howManyDigits, "0");
+				System.out.println(trackNumber + " - " + track.toString());
+			}
+		}
+	}
+	
+	public void download(Album album) {
+		if (album!=null && CollectionUtils.isNotEmpty(album.getTracks())) {
+			List<Track> tracks = album.getTracks();
 			String folderName = FileManagementUtils.createFolder(album);
 			Integer count = 0;
 			for ( Track track : tracks ) {
@@ -269,6 +352,30 @@ public class RockEater {
 
 	public Long getDownloadedAlbums() {
 		return downloadedAlbums;
+	}
+
+	public ProxySettings getProxySettings() {
+		return proxySettings;
+	}
+
+	public void setProxySettings(ProxySettings proxySettings) {
+		this.proxySettings = proxySettings;
+	}
+
+	public Boolean getDownloadEnabled() {
+		return downloadEnabled;
+	}
+
+	public void setDownloadEnabled(Boolean downloadEnabled) {
+		this.downloadEnabled = downloadEnabled;
+	}
+
+	public Boolean getShowInfoEnabled() {
+		return showInfoEnabled;
+	}
+
+	public void setShowInfoEnabled(Boolean showInfoEnabled) {
+		this.showInfoEnabled = showInfoEnabled;
 	}
 	
 }

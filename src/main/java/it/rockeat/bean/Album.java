@@ -67,4 +67,7 @@ public class Album {
 	public void setUrl(String url) {
 		this.url = url;
 	}
+	public int getTracksCount() {
+		return CollectionUtils.size(tracks);
+	}
 }
