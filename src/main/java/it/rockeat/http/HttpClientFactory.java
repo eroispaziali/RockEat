@@ -11,6 +11,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
@@ -39,8 +40,7 @@ public class HttpClientFactory {
 	    return params;
 	}
 	
-	@SuppressWarnings("unused")
-	private static SchemeRegistry registerSupportedSchemes() {
+	private static SchemeRegistry getSupportedSchemes() {
 		SchemeRegistry registry = new SchemeRegistry();
 		Scheme http = new Scheme("http", 80, PlainSocketFactory.getSocketFactory());
 		registry.register(http);
@@ -58,7 +58,8 @@ public class HttpClientFactory {
 	}
 	
 	public static HttpClient createInstance(HttpHost proxy, Credentials credentials) {
-        DefaultHttpClient client = new DefaultHttpClient(createHttpParams());
+		ThreadSafeClientConnManager tsccm = new ThreadSafeClientConnManager(getSupportedSchemes());
+        DefaultHttpClient client = new DefaultHttpClient(tsccm,createHttpParams());
 		client.getCredentialsProvider().setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()), credentials);
 		client.setRoutePlanner(new ProxyHttpRoutePlanner(proxy));
 		System.getProperties().put("http.proxySet", "true");

@@ -176,15 +176,19 @@ public class RockEater {
 				} catch (ParsingException e) {
 					parsingErrors++;
 				}
+			}
+			
+			Integer success = (CollectionUtils.size(urls)-urlErrors-connectionErrors);			
+			
+			if (connectionErrors>0) {  
+				String message = "RockEat ha qualche problema di connessione (" + connectionErrors + " errori su "+ CollectionUtils.size(urls) +" tentativi)";
+				System.out.println(message);
 			} 
 			
-			String out = "RockEat è riuscito ad analizzare " + (CollectionUtils.size(urls)-urlErrors-connectionErrors) + " pagine";
-			if (connectionErrors>0) {  
-				out += " (ci sono stati " + connectionErrors + " errori di connessione)";
+			if (success>0) {
+				String message = "RockEat ha trovato " + CollectionUtils.size(albums) + " album (" + tracksCount + " tracce in totale)";
+				System.out.println(message);
 			}
-			out += " e ha trovato " + CollectionUtils.size(albums) + " album (" + tracksCount + " tracce in totale)";
-			
-			System.out.println(out);
 			
 			/* Show info */
 			if (BooleanUtils.isTrue(showInfoEnabled)) {
@@ -202,7 +206,7 @@ public class RockEater {
 			String message = (downloadedTracks>0)
 					? "RockEat ha scaricato " + Long.toString(downloadedAlbums) + " album, per un totale di " + Long.toString(downloadedTracks) + " tracce (" + FileUtils.byteCountToDisplaySize(bytesDownloaded) + ") e spera che ti piacciano"
 					: "RockEat non è riuscito a scaricare nulla e se ne dispiace";
-				System.out.println(StringUtils.leftPad("", StringUtils.length(message), "="));
+				System.out.println(StringUtils.leftPad("", 80, "="));
 				System.out.println(message);
 
 		}

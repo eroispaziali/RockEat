@@ -39,8 +39,8 @@ public class ProxySettings {
 		}
 		
 		try {
-			URL url = new URL("http://" + proxyUrl);
-			host = new HttpHost(url.getHost(), url.getPort());
+			URL url = new URL(proxyUrl);
+			host = new HttpHost(url.getHost(), url.getPort(), "http");
 		} catch (MalformedURLException e) {
 			throw new ProxySettingsException(e);
 		}
