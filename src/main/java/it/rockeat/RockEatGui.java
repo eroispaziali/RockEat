@@ -6,17 +6,19 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
 
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.MalformedURLException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -30,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 public class RockEatGui extends JPanel implements ActionListener, PropertyChangeListener {
 
 	private static final long serialVersionUID = 7764484387055760031L;
+	protected JLabel label;
 	protected JTextField textField;
 	protected JTextArea textArea;
 	protected JProgressBar progressBar;
@@ -83,30 +86,40 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 	}
 	
     public RockEatGui() {
-        super(new GridBagLayout());
- 
+    	super(new GridBagLayout());
         textField = new JTextField(40);
-        textField.setText("");
-        
         startButton = new JButton("Vai");
         startButton.addActionListener(this);
+        progressBar = new JProgressBar(0,100);
  
         c = new GridBagConstraints();
-        c.gridwidth = GridBagConstraints.REMAINDER;
+        
         c.fill = GridBagConstraints.HORIZONTAL;
-        
+        c.insets = new Insets(15,5,5,5);
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1;
         add(textField, c);
+        
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(15,5,0,5);
+        c.gridx = 1;
+        c.gridy = 0;
+        c.weightx = 0;
         add(startButton, c);
+        
         c.fill = GridBagConstraints.BOTH;
-        
-        c.weightx = 1.0;
-        c.weighty = 1.0;
-        progressBar = new JProgressBar(0,100);
-		progressBar.setValue(0);
-		progressBar.setString("");
-		progressBar.setStringPainted(true);
+        c.insets = new Insets(5,5,5,5);
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth = 3;
+        c.weightx = 1;
+        c.weighty = 1;
         add(progressBar, c);
-        
+		
+
+		
+        setMinimumSize(new Dimension(250, 200));
         uiReset();
     }
 	 
@@ -136,15 +149,15 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 		        task.execute();
 			}
 			
-		} catch (MalformedURLException e) {
-			 JOptionPane.showMessageDialog(this, "RockEat ha bisogno di un indirizzo vero", "RockEat", 0);
-			 uiReset();
 		} catch (ConnectionException e) {
-			 JOptionPane.showMessageDialog(this, "RockEat non è riuscito a connettersi", "RockEat", 0);
+			 JOptionPane.showMessageDialog(this, "RockEat non è riuscito a connettersi :(", "RockEat", 0);
 			 uiReset();
 		} catch (ParsingException e) {
-			JOptionPane.showMessageDialog(this, "RockEat non ha trovato nulla da mangiare","RockEat", 1);
+			JOptionPane.showMessageDialog(this, "RockEat non ha trovato nulla da mangiare :(","RockEat", 1);
 			uiReset();
+		} catch (Exception e) {
+			 JOptionPane.showMessageDialog(this, "RockEat ha bisogno di un indirizzo web. Ricontrolla i dati inseriti.", "RockEat", 0);
+			 uiReset();
 		}
     }
  
@@ -165,6 +178,8 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
     	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	        frame.add(new RockEatGui());
     	        frame.pack();
+    	        frame.setSize(new Dimension(500,140));
+    	        frame.setResizable(false);
     	        frame.setVisible(true);
             }
         });
