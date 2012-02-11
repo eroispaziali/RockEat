@@ -213,7 +213,7 @@ public class RockEater {
 		
 	}
 	
-	private Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException {
+	public Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException {
 
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		
@@ -300,6 +300,17 @@ public class RockEater {
 				String trackNumber = StringUtils.leftPad(Integer.toString(track.getOrder()), howManyDigits, "0");
 				System.out.println(trackNumber + " - " + track.toString());
 			}
+		}
+	}
+	
+	public void download(Album album, Track track) throws ConnectionException, DownloadException, FileSaveException {
+		String folderName = FileManagementUtils.createFolder(album);
+		String filePath = folderName + FileManagementUtils.createFilename(album, track); 
+		File file = download(track, filePath);
+		if (BooleanUtils.isTrue(id3TaggingEnabled)) {
+			try {
+				Id3TaggingUtils.id3Tag(album, track, file);
+			} catch (Id3TaggingException e) {}
 		}
 	}
 	

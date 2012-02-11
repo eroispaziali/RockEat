@@ -54,7 +54,6 @@ public class RockEat {
 	}
 	
 	public static void main(String[] args) {
-		
 		Options options = new Options();
 		Option optionUrl = new Option(URL, "url", true, "specifica l'indirizzo della pagina da analizzare");
 		Option optionTagging = new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3");
