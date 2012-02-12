@@ -63,7 +63,6 @@ public class RockEater {
 	/* Options */
 	private Boolean id3TaggingEnabled = Boolean.TRUE;
 	private Boolean downloadEnabled = Boolean.TRUE;
-	private Boolean showInfoEnabled = Boolean.FALSE;
 	
 	private HttpClient getHttpClient() {
 		HttpClient httpclient = null;
@@ -169,12 +168,12 @@ public class RockEater {
 						tracksCount += album.getTracksCount();
 						albums.add(album);
 					} 
-				} catch (MalformedURLException e) {
-					urlErrors++;
 				} catch (ConnectionException e) {
 					connectionErrors++;
 				} catch (ParsingException e) {
 					parsingErrors++;
+				} catch(Exception e) {
+					urlErrors++;
 				}
 			}
 			
@@ -188,12 +187,6 @@ public class RockEater {
 			if (success>0) {
 				String message = "RockEat ha trovato " + CollectionUtils.size(albums) + " album (" + tracksCount + " tracce in totale)";
 				System.out.println(message);
-			}
-			
-			/* Show info */
-			if (BooleanUtils.isTrue(showInfoEnabled)) {
-				/* TODO: mostrare info */
-				
 			}
 			
 			/* Download */
@@ -241,7 +234,8 @@ public class RockEater {
 						track.setOrder(trackNumber);
 						tracks.add(track);
 					} catch (ConnectionException e) {
-						System.out.println("RockEat non è riuscito ad ottenere informazioni sulla traccia " + trackId);
+						/* Track lookup failure */
+						throw e;
 					}
 				}
 			}
@@ -290,19 +284,6 @@ public class RockEater {
 		}
 	}
 	
-	public void showInfo(Album album) {
-		List<Track> tracks = album.getTracks();
-		if (CollectionUtils.isNotEmpty(tracks)) {
-			Integer count = 0;
-			for (Track track:tracks) {
-				count++;
-				Integer howManyDigits = StringUtils.length(Integer.toString(CollectionUtils.size(album.getTracks())));
-				String trackNumber = StringUtils.leftPad(Integer.toString(track.getOrder()), howManyDigits, "0");
-				System.out.println(trackNumber + " - " + track.toString());
-			}
-		}
-	}
-	
 	public void download(Album album, Track track) throws ConnectionException, DownloadException, FileSaveException {
 		String folderName = FileManagementUtils.createFolder(album);
 		String filePath = folderName + FileManagementUtils.createFilename(album, track); 
@@ -310,7 +291,9 @@ public class RockEater {
 		if (BooleanUtils.isTrue(id3TaggingEnabled)) {
 			try {
 				Id3TaggingUtils.id3Tag(album, track, file);
-			} catch (Id3TaggingException e) {}
+			} catch (Id3TaggingException e) {
+				/* tagging exception, silently ignored */
+			}
 		}
 	}
 	
@@ -384,14 +367,6 @@ public class RockEater {
 
 	public void setDownloadEnabled(Boolean downloadEnabled) {
 		this.downloadEnabled = downloadEnabled;
-	}
-
-	public Boolean getShowInfoEnabled() {
-		return showInfoEnabled;
-	}
-
-	public void setShowInfoEnabled(Boolean showInfoEnabled) {
-		this.showInfoEnabled = showInfoEnabled;
 	}
 	
 }
