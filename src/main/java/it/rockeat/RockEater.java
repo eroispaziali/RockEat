@@ -6,6 +6,7 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
+import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.http.HttpClientFactory;
 import it.rockeat.util.FileManagementUtils;
@@ -45,6 +46,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 public class RockEater {
 	
@@ -131,11 +133,12 @@ public class RockEater {
 		return track;
 	}
 	
-	private Track lookupTrack(String id, String lookupUrl) throws ConnectionException {
+	private Track lookupTrack(String id, String lookupUrl) throws ConnectionException, LookupException {
 		try {
 			HttpPost request = new HttpPost(lookupUrl);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair("id", id));
+			qparams.add(new BasicNameValuePair("0k", "ok"));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
 			HttpResponse response = getHttpClient().execute(request);
 			HttpEntity responseEntity = response.getEntity();
@@ -144,6 +147,8 @@ public class RockEater {
 			return track;
 		} catch (IOException e) {
 			throw new ConnectionException(e);
+		} catch (JsonSyntaxException e) {
+			throw new LookupException(e);
 		}
 	}
 	
@@ -206,7 +211,7 @@ public class RockEater {
 		
 	}
 	
-	public Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException {
+	public Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException, LookupException {
 
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		
@@ -234,6 +239,9 @@ public class RockEater {
 						track.setOrder(trackNumber);
 						tracks.add(track);
 					} catch (ConnectionException e) {
+						/* Connection error on lookup */
+						throw e;
+					} catch (LookupException e) {
 						/* Track lookup failure */
 						throw e;
 					}
