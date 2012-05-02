@@ -1,11 +1,10 @@
 package it.rockeat.ui;
 
-import it.rockeat.RockEater;
+import it.rockeat.Controller;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.FileSaveException;
-import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
 
 import java.awt.Component;
@@ -49,7 +48,7 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 	protected JProgressBar progressBar;
 	protected JButton startButton;
 	protected GridBagConstraints c;
-	protected RockEater eater;
+	protected Controller controller = new Controller();
 
 	public class DownloadTask extends SwingWorker<Void, Void> {
 		
@@ -69,7 +68,7 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 				label = track.toString();
 				try {
 					setProgress(++count);
-					eater.download(album, track);
+					controller.download(album, track);
 				} catch (FileSaveException e) {
 					JOptionPane.showMessageDialog(component, "RockEat non riesce a salvare il file, disco pieno?", WINDOW_TITLE, 0);
 					setProgress(ABORT);
@@ -77,8 +76,8 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 					setProgress(ERROR);
 				}
 			}
-			if (eater.getDownloadedTracks()>0) {
-				label = "RockEat ha scaricato " + Long.toString(eater.getDownloadedTracks()) + " tracce (" + FileUtils.byteCountToDisplaySize(eater.getBytesDownloaded()) + ") e spera che ti piacciano";
+			if (controller.getDownloadedTracks()>0) {
+				label = "RockEat ha scaricato " + Long.toString(controller.getDownloadedTracks()) + " tracce (" + FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()) + ") e spera che ti piacciano";
 			} else {
 				label = "RockEat non è riuscito a scaricare niente e se ne dispiace";
 			}
@@ -144,16 +143,12 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
     	startButton.setEnabled(false);
         String url = textField.getText();
         
-        eater = new RockEater();
-        eater.setDownloadEnabled(Boolean.TRUE);
-        eater.setId3TaggingEnabled(Boolean.TRUE);
-        
         startButton.setEnabled(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
         
         try {
-			Album album = eater.parse(url);
+			Album album = controller.parse(url);
 			
 			progressBar.setMinimum(0);
 			progressBar.setMaximum(album.getTracksCount()+1);
@@ -170,9 +165,6 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 			uiReset();
 		} catch (ParsingException e) {
 			JOptionPane.showMessageDialog(this, MESSAGE_PARSING, WINDOW_TITLE, 1);
-			uiReset();
-		} catch (LookupException e) {
-			JOptionPane.showMessageDialog(this, MESSAGE_LOOKUP, WINDOW_TITLE, 1);
 			uiReset();
 		} catch (MalformedURLException e) {
 			JOptionPane.showMessageDialog(this, MESSAGE_URL, WINDOW_TITLE, 1);

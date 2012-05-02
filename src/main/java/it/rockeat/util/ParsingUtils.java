@@ -1,5 +1,9 @@
 package it.rockeat.util;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class ParsingUtils {
@@ -68,4 +72,20 @@ public class ParsingUtils {
 			return StringUtils.EMPTY;
 		}
 	}
+	
+	public static String streamToString(InputStream is) {
+		try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		    StringBuilder sb = new StringBuilder();
+		    String line = null;
+		    while ((line = reader.readLine()) != null) {
+		      sb.append(line + "\n");
+		    }
+		    is.close();
+		    return sb.toString();
+		} catch (Exception e) {
+			return StringUtils.EMPTY;
+		}
+	}
+
 }

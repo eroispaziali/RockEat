@@ -1,7 +1,5 @@
 package it.rockeat.http;
 
-import it.rockeat.RockEater;
-
 import org.apache.http.HttpHost;
 import org.apache.http.HttpVersion;
 import org.apache.http.auth.AuthScope;
@@ -21,6 +19,7 @@ import org.apache.http.params.HttpProtocolParams;
 
 public class HttpClientFactory {
 	
+	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.X.Y.Z Safari/525.13";
 	private final static Integer MaxRedirects = 10;
 	private final static Boolean AllowCircularRedirects = Boolean.FALSE;
 	private final static Integer httpConnectionTimeout = 10000;
@@ -31,7 +30,7 @@ public class HttpClientFactory {
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
         HttpProtocolParams.setContentCharset(params, "UTF-8");
         HttpProtocolParams.setUseExpectContinue(params, true);
-        HttpProtocolParams.setUserAgent(params, RockEater.USER_AGENT_STRING);
+        HttpProtocolParams.setUserAgent(params, USER_AGENT_STRING);
         params.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
 	    params.setIntParameter(ClientPNames.MAX_REDIRECTS, MaxRedirects);
 	    params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, AllowCircularRedirects);
