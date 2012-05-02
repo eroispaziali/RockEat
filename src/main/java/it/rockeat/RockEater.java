@@ -50,6 +50,7 @@ import com.google.gson.JsonSyntaxException;
 
 public class RockEater {
 	
+	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.X.Y.Z Safari/525.13";
 	public static final String URL_TRACK_LOOKUP = "/web/include/ajax.play.php";
 	public static final String PARSING_TRACK_SELECTECTION_EXPRESSION = "ul.items li.play a";
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
@@ -88,7 +89,7 @@ public class RockEater {
 	}
 	
 	private String generateToken(Track track) {
-		return HashHelper.md5(track.getUrl() + "-daisyduke");
+		return HashHelper.md5(track.getUrl() + "-rapfuturistico");
 	}
 	
 	private void httpDownload(Track track, OutputStream out) throws ConnectionException {
