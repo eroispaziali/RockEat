@@ -55,6 +55,7 @@ public class Track {
 		this.author = author;
 	}
 	
+	@Override
 	public String toString() {
 		String string = "\"" + title + "\" di " + author; 
 		return string;

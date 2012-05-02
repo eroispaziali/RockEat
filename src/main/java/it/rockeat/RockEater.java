@@ -54,6 +54,7 @@ public class RockEater {
 	public static final String PARSING_TRACK_SELECTECTION_EXPRESSION = "ul.items li.play a";
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
 	public static final String TOKEN_PARAM = "rockitID";
+	public static final String PARAM_REFERER = "Referer";
 
 	private ProxySettings proxySettings;
 	
@@ -88,12 +89,13 @@ public class RockEater {
 	}
 	
 	private String generateToken(Track track) {
-		return HashHelper.md5(track.getUrl() + "-daisyduke");
+		return HashHelper.md5(track.getUrl() + "-rapfuturistico");
 	}
 	
 	private void httpDownload(Track track, OutputStream out) throws ConnectionException {
 		try {
 			HttpPost request = new HttpPost(track.getUrl());
+			request.setHeader(PARAM_REFERER, "http://www.rockit.it/web/js/player3.swf");
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair(TOKEN_PARAM, generateToken(track)));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
