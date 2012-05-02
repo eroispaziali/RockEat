@@ -138,7 +138,8 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
         uiReset();
     }
 	 
-    public void actionPerformed(ActionEvent evt) {
+    @Override
+	public void actionPerformed(ActionEvent evt) {
     	textField.setEnabled(false);
     	startButton.setEnabled(false);
         String url = textField.getText();
@@ -185,7 +186,8 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 		}
     }
  
-    public void propertyChange(PropertyChangeEvent evt) {
+    @Override
+	public void propertyChange(PropertyChangeEvent evt) {
         if ("progress" == evt.getPropertyName()) {
         	DownloadTask task = (DownloadTask) evt.getSource();
             progressBar.setValue((Integer)evt.getNewValue());
@@ -196,7 +198,8 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
     
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
     	        JFrame frame = new JFrame(WINDOW_TITLE);
     	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	        frame.add(new RockEatGui());

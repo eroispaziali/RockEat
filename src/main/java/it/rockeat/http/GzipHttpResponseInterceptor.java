@@ -13,7 +13,8 @@ import org.apache.http.protocol.HttpContext;
 
 public class GzipHttpResponseInterceptor implements HttpResponseInterceptor {
 
-    public void process(final HttpResponse response, final HttpContext context) throws HttpException, IOException {
+    @Override
+	public void process(final HttpResponse response, final HttpContext context) throws HttpException, IOException {
         HttpEntity entity = response.getEntity();
         Header ceheader = entity.getContentEncoding();
         if (ceheader != null) {

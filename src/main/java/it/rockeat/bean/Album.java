@@ -51,6 +51,7 @@ public class Album {
 	public void setGenre(String genre) {
 		this.genre = genre;
 	}
+	@Override
 	public String toString() {
 		String st = "";
 		if (StringUtils.isNotBlank(title)) {

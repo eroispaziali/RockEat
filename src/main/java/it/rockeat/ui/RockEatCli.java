@@ -34,10 +34,10 @@ public class RockEatCli {
 			// Option optionProxy = new Option(PROXY, "proxy", true, "imposta un proxy HTTP da usare per la connessione");
 			// Option optionProxyIgnore = new Option(PROXY_IGNORE_HOSTS, "no-proxy-for", true, "specifica una lista di indirizzi che non devono passare dal proxy (valori separati da virgola)");
 
+			options.addOption(optionUrl);
 			options.addOption(optionTagging);
 			// options.addOption(optionProxy);
 			// options.addOption(optionProxyIgnore);
-			options.addOption(optionUrl);
 
 		    try {
 		    	CommandLineParser parser = new GnuParser();
