@@ -9,7 +9,7 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpClientFactory;
+import it.rockeat.http.HttpUtils;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
 import it.rockeat.util.ParsingUtils;
@@ -24,10 +24,7 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 
 public class Controller {
 	
@@ -40,26 +37,14 @@ public class Controller {
 		return eater;
 	}
 	
-	private InputStream httpGet(String url) throws ConnectionException {
-		try {
-			HttpGet httpget = new HttpGet(url);
-			HttpClient httpClient = HttpClientFactory.createInstance();
-			HttpResponse response = httpClient.execute(httpget);
-			HttpEntity responseEntity = response.getEntity();
-			return responseEntity.getContent();
-		} catch (IOException e) {
-			throw new ConnectionException(e);
-		}
-	}
-
 	@SuppressWarnings("unused")
 	public Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException {
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		URL parsedUrl = new URL(url);
 		Eater eater = findEater(url);
-		InputStream pageStream = httpGet(url);
+		InputStream pageStream = HttpUtils.httpGet(url);
 		String htmlCode = ParsingUtils.streamToString(pageStream);
-		HttpClient httpClient = HttpClientFactory.createInstance();
+		HttpClient httpClient = HttpUtils.createClient();
 		Album album = eater.parse(httpClient, htmlCode);
 		album.setUrl(url);
 		return album;
@@ -70,7 +55,7 @@ public class Controller {
 		String folderName = FileManagementUtils.createFolder(album);
 		String filePath = folderName + FileManagementUtils.createFilename(album, track); 
 		try {
-			HttpClient httpClient = HttpClientFactory.createInstance();
+			HttpClient httpClient = HttpUtils.createClient();
 			OutputStream outputStream = new FileOutputStream(filePath);
 			eater.download(httpClient,track,outputStream);
 			outputStream.close();

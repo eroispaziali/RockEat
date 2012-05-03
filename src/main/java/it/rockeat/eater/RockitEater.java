@@ -5,7 +5,7 @@ import it.rockeat.bean.Track;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.util.HashHelper;
+import it.rockeat.util.HashUtils;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.IOException;
@@ -38,6 +38,7 @@ public class RockitEater implements Eater {
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
 	public static final String TOKEN_PARAM = "rockitID";
 	public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
+	public static final String KNOWN_PLAYER_MD5 = "2594c03f4a6138919dbc692301c1da06";
 
 	private static Track cleanup(Track track) {
 		String cleanedTitle = track.getTitle();
@@ -53,7 +54,7 @@ public class RockitEater implements Eater {
 	}
 	
 	private static String generateToken(Track track) {
-		return HashHelper.md5(track.getUrl() + "-rapfuturistico");
+		return HashUtils.md5(track.getUrl() + "-rapfuturistico");
 	}
 	
 	private Track lookupTrack(HttpClient httpClient, String id, String lookupUrl) throws ConnectionException, LookupException {
@@ -82,7 +83,9 @@ public class RockitEater implements Eater {
 		String albumTitle = StringUtils.EMPTY;
 		String albumArtist = StringUtils.EMPTY;
 		List<Track> tracks = new ArrayList<Track>();
+		
 		Document doc = Jsoup.parse(htmlCode);
+		
 		
 		Elements playlistEl = doc.select(PARSING_TRACK_SELECTION_EXPRESSION);
 		Integer trackNumber = 0;
@@ -142,5 +145,5 @@ public class RockitEater implements Eater {
 			throw new ConnectionException(e);
 		}
 	}
-
+	
 }

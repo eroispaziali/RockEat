@@ -1,10 +1,18 @@
 package it.rockeat.http;
 
+import it.rockeat.exception.ConnectionException;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
@@ -17,7 +25,7 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
-public class HttpClientFactory {
+public class HttpUtils {
 	
 	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.X.Y.Z Safari/525.13";
 	private final static Integer MaxRedirects = 10;
@@ -50,14 +58,14 @@ public class HttpClientFactory {
 		return registry;
 	}
 	
-	public static HttpClient createInstance() {
+	public static HttpClient createClient() {
         DefaultHttpClient httpclient = new DefaultHttpClient(createHttpParams());
         httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
         httpclient.addResponseInterceptor(new GzipHttpResponseInterceptor());
         return httpclient;
 	}
 	
-	public static HttpClient createInstance(HttpHost proxy, Credentials credentials) {
+	public static HttpClient createClient(HttpHost proxy, Credentials credentials) {
 		ThreadSafeClientConnManager tsccm = new ThreadSafeClientConnManager(getSupportedSchemes());
         DefaultHttpClient client = new DefaultHttpClient(tsccm,createHttpParams());
 		client.getCredentialsProvider().setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()), credentials);
@@ -68,6 +76,18 @@ public class HttpClientFactory {
 		System.getProperties().put("http.proxyUser", credentials.getUserPrincipal());
 		System.getProperties().put("http.proxyPassword", credentials.getPassword());
 		return client;
+	}
+	
+	public static InputStream httpGet(String url) throws ConnectionException {
+		try {
+			HttpGet httpget = new HttpGet(url);
+			HttpClient httpClient = HttpUtils.createClient();
+			HttpResponse response = httpClient.execute(httpget);
+			HttpEntity responseEntity = response.getEntity();
+			return responseEntity.getContent();
+		} catch (IOException e) {
+			throw new ConnectionException(e);
+		}
 	}
 	
 }

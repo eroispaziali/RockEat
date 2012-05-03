@@ -2,7 +2,7 @@ package it.rockeat.util;
 
 import java.security.MessageDigest;
 
-public class HashHelper {
+public class HashUtils {
 
 	private static String toHex(byte[] bytes) {
 		String hex = "0123456789abcdef";
@@ -28,5 +28,5 @@ public class HashHelper {
 			return "";
 		}
 	}
-
+	
 }

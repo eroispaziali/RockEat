@@ -1,17 +1,21 @@
 package it.rockeat.ui;
 
-import java.net.MalformedURLException;
-
 import it.rockeat.Controller;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
+import it.rockeat.eater.RockitEater;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpClientFactory;
+import it.rockeat.http.HttpUtils;
 import it.rockeat.http.RockCrawler;
 import it.rockeat.util.FormatUtils;
+import it.rockeat.util.HashUtils;
+import it.rockeat.util.ParsingUtils;
+
+import java.io.InputStream;
+import java.net.MalformedURLException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,7 +25,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
@@ -35,6 +43,7 @@ public class RockEatCli {
 		private static final String URL = "u";
 		private static final String CRAWLING = "e";
 		private static final String DOWNLOAD = "d";
+		private static final String TESTING = "c";
 		
 		private static void printHelp(Options options) {
 			HelpFormatter formatter = new HelpFormatter();
@@ -46,7 +55,7 @@ public class RockEatCli {
 		       int numberOfCrawlers = 1;
 		       CrawlConfig config = new CrawlConfig();
 		       config.setCrawlStorageFolder(crawlStorageFolder);
-		       config.setUserAgentString(HttpClientFactory.USER_AGENT_STRING);
+		       config.setUserAgentString(HttpUtils.USER_AGENT_STRING);
 		       config.setPolitenessDelay(10);
 		       config.setMaxDepthOfCrawling(7);
 		       config.setMaxPagesToFetch(10000);
@@ -58,18 +67,34 @@ public class RockEatCli {
 		       controller.addSeed(url);
 		       System.out.println();
 		       controller.start(RockCrawler.class, numberOfCrawlers);
+		}
+		
+		public static void test(String url) throws ConnectionException {
+			InputStream pageStream = HttpUtils.httpGet(url);
+			String htmlCode = ParsingUtils.streamToString(pageStream);
+			Document doc = Jsoup.parse(htmlCode);
+			Element playerEl = doc.select(".player embed[src=$.swf]").first();
+			String playerUrl = StringUtils.EMPTY;
+			if (playerEl!=null && playerEl.hasAttr("src")) {
+				playerUrl = playerEl.attr("src");
+				InputStream playerSwf = HttpUtils.httpGet("http://www.rockit.it"+playerUrl);
+				String md5 = HashUtils.md5(ParsingUtils.streamToString(playerSwf));
+				Boolean result = StringUtils.equals(md5, RockitEater.KNOWN_PLAYER_MD5);
+				System.out.println("Player trovato, verifica: " + BooleanUtils.toStringYesNo(result));
+				
+			} else {
+				System.out.println("Player non trovato");
 			}
+			
+		}
 		
 		public static void main(String[] args) {
 			Options options = new Options();
-			Option optionUrl = new Option(URL, "url", true, "specifica l'indirizzo della pagina da analizzare");
-			Option optionTagging = new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3");
-			Option optionDownload = new Option(DOWNLOAD, "download", false, "scarica tutte le tracce disponibili");
-			Option optionCrawling = new Option(CRAWLING, "explore", false, "esplora le pagine vicine (funzionalità sperimentale)");
-			options.addOption(optionCrawling);
-			options.addOption(optionDownload);
-			options.addOption(optionTagging);
-			options.addOption(optionUrl);
+			options.addOption(new Option(URL, "url", true, "specifica l'indirizzo della pagina da analizzare"));
+			options.addOption(new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3"));
+			options.addOption(new Option(DOWNLOAD, "download", false, "scarica tutte le tracce disponibili"));
+			options.addOption(new Option(CRAWLING, "explore", false, "esplora le pagine vicine (funzionalità sperimentale)"));
+			// options.addOption(new Option(TESTING, "test", false, "testa la compatibilità"));
 			
 		    try {
 		    	CommandLineParser parser = new GnuParser();
@@ -79,7 +104,13 @@ public class RockEatCli {
 				if (commandLine.hasOption(URL)) {
 					if (commandLine.hasOption(URL)) {
 						String url = commandLine.getOptionValue(URL);
-						
+						if (commandLine.hasOption(TESTING)) {
+							try {
+								test(url);
+							} catch (ConnectionException e) {
+								System.out.println("Test non riuscito, passo oltre...");
+							}
+						}
 						if (false || commandLine.hasOption(CRAWLING)) {
 							System.out.println(Messages.PARSING_IN_PROGRESS);
 							try {

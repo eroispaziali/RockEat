@@ -4,7 +4,7 @@ import it.rockeat.bean.Album;
 import it.rockeat.eater.Eater;
 import it.rockeat.eater.RockitEater;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpClientFactory;
+import it.rockeat.http.HttpUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +43,7 @@ public class RockCrawler extends WebCrawler {
 		String url = page.getWebURL().getURL();
 		Eater eater = new RockitEater();
 		try {
-			HttpClient client = HttpClientFactory.createInstance();
+			HttpClient client = HttpUtils.createClient();
 			Album album = eater.parse(client, url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
