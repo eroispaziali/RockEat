@@ -50,7 +50,7 @@ public class HttpClientFactory {
 		return registry;
 	}
 	
-	public static DefaultHttpClient createInstance() {
+	public static HttpClient createInstance() {
         DefaultHttpClient httpclient = new DefaultHttpClient(createHttpParams());
         httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
         httpclient.addResponseInterceptor(new GzipHttpResponseInterceptor());

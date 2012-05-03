@@ -44,7 +44,7 @@ public class RockCrawler extends WebCrawler {
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(" " + album.getUrl());
-				System.out.println(FormatUtils.formatAlbum(album));
+				System.out.println(FormatUtils.formatAlbumData(album));
 			} else {
 				throw new ParsingException();
 			}

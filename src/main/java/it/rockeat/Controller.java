@@ -59,7 +59,8 @@ public class Controller {
 		Eater eater = findEater(url);
 		InputStream pageStream = httpGet(url);
 		String htmlCode = ParsingUtils.streamToString(pageStream);
-		Album album = eater.parse(htmlCode);
+		HttpClient httpClient = HttpClientFactory.createInstance();
+		Album album = eater.parse(httpClient, htmlCode);
 		album.setUrl(url);
 		return album;
 	}
@@ -69,8 +70,9 @@ public class Controller {
 		String folderName = FileManagementUtils.createFolder(album);
 		String filePath = folderName + FileManagementUtils.createFilename(album, track); 
 		try {
+			HttpClient httpClient = HttpClientFactory.createInstance();
 			OutputStream outputStream = new FileOutputStream(filePath);
-			eater.download(track,outputStream);
+			eater.download(httpClient,track,outputStream);
 			outputStream.close();
 			File fileOnDisk = new File(filePath);
 			if (FileUtils.sizeOf(fileOnDisk) == 0) {

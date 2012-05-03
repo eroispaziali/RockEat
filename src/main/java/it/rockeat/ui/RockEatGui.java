@@ -31,16 +31,11 @@ import javax.swing.SwingWorker;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class RockEatGui extends JPanel implements ActionListener, PropertyChangeListener {
 
-	private static final long serialVersionUID 		= 7764484387055760031L;
-	public static final String WINDOW_TITLE 		= "RockEat - solo roba italiana";
-	public static final String MESSAGE_CONNECTION 	= "RockEat non è riuscito a connettersi";
-	public static final String MESSAGE_LOOKUP 		= "RockEat non riesce a recuperare le informazioni delle tracce";
-	public static final String MESSAGE_PARSING 		= "RockEat non ha trovato nulla da mangiare";
-	public static final String MESSAGE_URL 			= "RockEat ha bisogno di un indirizzo web";
-	public static final String MESSAGE_UNEXPECTED 	= "RockEat ha riscontrato un errore del tutto inatteso";
+	private static final long serialVersionUID 	= 7764484387055760031L;
 	
 	protected JLabel label;
 	protected JTextField textField;
@@ -70,16 +65,18 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 					setProgress(++count);
 					controller.download(album, track);
 				} catch (FileSaveException e) {
-					JOptionPane.showMessageDialog(component, "RockEat non riesce a salvare il file, disco pieno?", WINDOW_TITLE, 0);
+					JOptionPane.showMessageDialog(component, Messages.ERROR_FILEWRITE, Messages.TITLE, 0);
 					setProgress(ABORT);
 				} catch (Exception e) {
 					setProgress(ERROR);
 				}
 			}
 			if (controller.getDownloadedTracks()>0) {
-				label = "RockEat ha scaricato " + Long.toString(controller.getDownloadedTracks()) + " tracce (" + FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()) + ") e spera che ti piacciano";
+				label = Messages.DOWNLOAD_COMPLETE;
+				label = StringUtils.replace(label,"{0}", Long.toString(controller.getDownloadedTracks()));
+				label = StringUtils.replace(label,"{1}", FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()));
 			} else {
-				label = "RockEat non è riuscito a scaricare niente e se ne dispiace";
+				label = Messages.ERROR_DOWNLOAD;
 			}
 			setProgress(++count);
 	        return null;
@@ -161,19 +158,19 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 			}
 			
 		} catch (ConnectionException e) {
-			JOptionPane.showMessageDialog(this, MESSAGE_CONNECTION, WINDOW_TITLE, 0);
+			JOptionPane.showMessageDialog(this, Messages.ERROR_CONNECTION, Messages.TITLE, 0);
 			uiReset();
 		} catch (ParsingException e) {
-			JOptionPane.showMessageDialog(this, MESSAGE_PARSING, WINDOW_TITLE, 1);
+			JOptionPane.showMessageDialog(this, Messages.NOTHING_FOUND, Messages.TITLE, 1);
 			uiReset();
 		} catch (MalformedURLException e) {
-			JOptionPane.showMessageDialog(this, MESSAGE_URL, WINDOW_TITLE, 1);
+			JOptionPane.showMessageDialog(this, Messages.ERROR_URL, Messages.TITLE, 1);
 			uiReset();
 		} catch (IllegalArgumentException e) {
-			JOptionPane.showMessageDialog(this, MESSAGE_URL, WINDOW_TITLE, 1);
+			JOptionPane.showMessageDialog(this, Messages.ERROR_URL, Messages.TITLE, 1);
 			uiReset();
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, MESSAGE_UNEXPECTED, WINDOW_TITLE, 0);
+			JOptionPane.showMessageDialog(this, Messages.ERROR_UNEXPECTED, Messages.TITLE, 0);
 			uiReset();
 		}
     }
@@ -192,7 +189,7 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             @Override
 			public void run() {
-    	        JFrame frame = new JFrame(WINDOW_TITLE);
+    	        JFrame frame = new JFrame(Messages.TITLE);
     	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	        frame.add(new RockEatGui());
     	        frame.pack();

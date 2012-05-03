@@ -1,11 +1,16 @@
 package it.rockeat;
 
 import it.rockeat.bean.Album;
+import it.rockeat.eater.Eater;
+import it.rockeat.eater.RockitEater;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.http.HttpClientFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import org.apache.http.client.HttpClient;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
@@ -36,11 +41,10 @@ public class RockCrawler extends WebCrawler {
     @Override
 	public void visit(Page page) {
 		String url = page.getWebURL().getURL();
-		RockEater eater = new RockEater();
-		eater.setDownloadEnabled(false);
-		eater.setId3TaggingEnabled(true);
+		Eater eater = new RockitEater();
 		try {
-			Album album = eater.parse(url);
+			HttpClient client = HttpClientFactory.createInstance();
+			Album album = eater.parse(client, url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(url + ": " + album);

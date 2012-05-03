@@ -73,28 +73,26 @@ public class RockEatCli {
 			
 		    try {
 		    	CommandLineParser parser = new GnuParser();
-		        CommandLine line = parser.parse(options,args);
+		        CommandLine commandLine = parser.parse(options,args);
 				Controller controller = new Controller();
-				controller.setId3TaggingEnabled(!line.hasOption(DISABLE_TAGGING));
-				if (line.hasOption(URL)) {
-					if (line.hasOption(URL)) {
-						String url = line.getOptionValue(URL);
+				controller.setId3TaggingEnabled(!commandLine.hasOption(DISABLE_TAGGING));
+				if (commandLine.hasOption(URL)) {
+					if (commandLine.hasOption(URL)) {
+						String url = commandLine.getOptionValue(URL);
 						
-						if (false || line.hasOption(CRAWLING)) {
-							System.out.println("RockEat sta analizzando la pagina, un attimo di pazienza...");
+						if (false || commandLine.hasOption(CRAWLING)) {
+							System.out.println(Messages.PARSING_IN_PROGRESS);
 							try {
 								crawl(url);
 							} catch (Exception e) {
 								System.out.println("RockEat non riesce ad ispezionare nulla.");
 							}
 						} else {
-							System.out.println("RockEat sta analizzando la pagina, un attimo di pazienza...");
-							Album album;
 							try {
-								album = controller.parse(url);
-								System.out.println(FormatUtils.formatAlbum(album));
-								
-								if (line.hasOption(DOWNLOAD)) {
+								System.out.println(Messages.PARSING_IN_PROGRESS);
+								Album album = controller.parse(url);
+								System.out.println(FormatUtils.formatAlbumData(album));
+								if (commandLine.hasOption(DOWNLOAD)) {
 									System.out.print("Download delle tracce: [");
 									for (Track track : album.getTracks()) {
 										System.out.print("=");
@@ -108,19 +106,22 @@ public class RockEatCli {
 									}
 									String label = StringUtils.EMPTY;
 									if (controller.getDownloadedTracks()>0) {
-										label = "RockEat ha scaricato " + Long.toString(controller.getDownloadedTracks()) + " tracce (" + FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()) + ") e spera che ti piacciano.";
+										label = Messages.DOWNLOAD_COMPLETE;
+										label = StringUtils.replace(label,"{0}", Long.toString(controller.getDownloadedTracks()));
+										label = StringUtils.replace(label,"{1}", FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()));
+
 									} else {
-										label = "RockEat non è riuscito a scaricare niente e se ne dispiace.";
+										label = Messages.ERROR_DOWNLOAD;
 									}
 									System.out.println("]\n" + label + "\n");
 								}
 
 							} catch (MalformedURLException e) {
-								System.out.println("RockEat ha bisogno di un indirizzo valido");
+								System.out.println(Messages.ERROR_URL);
 							} catch (ConnectionException e) {
-								System.out.println("RockEat non è riuscito a connettersi");
+								System.out.println(Messages.ERROR_CONNECTION);
 							} catch (ParsingException e) {
-								System.out.println("RockEat non ha trovato nulla");
+								System.out.println(Messages.NOTHING_FOUND);
 							}
 						}
 			        	

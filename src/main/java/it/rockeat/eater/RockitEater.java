@@ -5,7 +5,6 @@ import it.rockeat.bean.Track;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpClientFactory;
 import it.rockeat.util.HashHelper;
 import it.rockeat.util.ParsingUtils;
 
@@ -57,14 +56,13 @@ public class RockitEater implements Eater {
 		return HashHelper.md5(track.getUrl() + "-rapfuturistico");
 	}
 	
-	private Track lookupTrack(String id, String lookupUrl) throws ConnectionException, LookupException {
+	private Track lookupTrack(HttpClient httpClient, String id, String lookupUrl) throws ConnectionException, LookupException {
 		try {
 			HttpPost request = new HttpPost(lookupUrl);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair("id", id));
 			qparams.add(new BasicNameValuePair("0k", "ok"));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
-			HttpClient httpClient = HttpClientFactory.createInstance();
 			HttpResponse response = httpClient.execute(request);
 			HttpEntity responseEntity = response.getEntity();
 			InputStream trackInformation = responseEntity.getContent(); 
@@ -79,7 +77,7 @@ public class RockitEater implements Eater {
 
 
 	@Override
-	public Album parse(String htmlCode) throws ParsingException {
+	public Album parse(HttpClient httpClient, String htmlCode) throws ParsingException {
 		Album album = new Album();
 		String albumTitle = StringUtils.EMPTY;
 		String albumArtist = StringUtils.EMPTY;
@@ -94,7 +92,7 @@ public class RockitEater implements Eater {
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						trackNumber++;
-						Track track = lookupTrack(trackId, TRACK_LOOKUP_URL);
+						Track track = lookupTrack(httpClient, trackId, TRACK_LOOKUP_URL);
 						track.setId(trackId);
 						track.setOrder(trackNumber);
 						tracks.add(track);
@@ -130,14 +128,13 @@ public class RockitEater implements Eater {
 	}
 
 	@Override
-	public void download(Track track, OutputStream out) throws ConnectionException {
+	public void download(HttpClient httpClient, Track track, OutputStream out) throws ConnectionException {
 		try {
 			HttpPost request = new HttpPost(track.getUrl());
 			request.setHeader("Referer", REFERER_VALUE);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair(TOKEN_PARAM, generateToken(track)));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
-			HttpClient httpClient = HttpClientFactory.createInstance();
 			HttpResponse response = httpClient.execute(request);
 			HttpEntity responseEntity = response.getEntity();
 			responseEntity.writeTo(out);
