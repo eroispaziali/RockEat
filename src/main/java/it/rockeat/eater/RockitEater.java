@@ -42,6 +42,7 @@ public class RockitEater implements Eater {
 	public static final String TOKEN_PARAM = "rockitID";
 	public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
 	public static final String KNOWN_PLAYER_MD5 = "2594c03f4a6138919dbc692301c1da06";
+	public static final String PEPE = "-rapfuturistico";
 
 	private static Track cleanup(Track track) {
 		String cleanedTitle = track.getTitle();
@@ -57,7 +58,7 @@ public class RockitEater implements Eater {
 	}
 	
 	private static String generateToken(Track track) {
-		return HashUtils.md5(track.getUrl() + "-rapfuturistico");
+		return HashUtils.md5(track.getUrl() + PEPE);
 	}
 	
 	private Track lookupTrack(HttpClient httpClient, String id, String lookupUrl) throws ConnectionException, LookupException {

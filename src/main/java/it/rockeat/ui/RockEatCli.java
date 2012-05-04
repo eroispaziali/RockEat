@@ -106,9 +106,13 @@ public class RockEatCli {
 									System.out.println(FormatUtils.formatAlbumData(album));
 									
 									if (commandLine.hasOption(DOWNLOAD)) {
-										System.out.print("Download delle tracce: [");
+										Integer progress = 0;
+										Integer count = album.getTracksCount();
 										for (Track track : album.getTracks()) {
-											System.out.print("=");
+											progress++;
+											String st = StringUtils.leftPad(">", progress+1, "=") + StringUtils.leftPad("", count-progress, " ");
+											System.out.print("Download: [" + st + "] "+Long.toString(controller.getDownloadedTracks()+1) + "/" + Integer.toString(count));
+											System.out.print("\r");
 											try {
 												controller.download(album, track);
 											} catch (DownloadException e) {
@@ -126,7 +130,7 @@ public class RockEatCli {
 										} else {
 											label = Messages.ERROR_DOWNLOAD;
 										}
-										System.out.println("]\n" + label + "\n");
+										System.out.println("\n" + label);
 										
 										/* Self-diagnostic test on failure */
 										if (controller.getDownloadedTracks()==0) {
