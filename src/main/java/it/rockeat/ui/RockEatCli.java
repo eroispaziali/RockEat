@@ -71,7 +71,7 @@ public class RockEatCli {
 			options.addOption(new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3"));
 			options.addOption(new Option(DOWNLOAD, "download", false, "scarica tutte le tracce disponibili"));
 			options.addOption(new Option(CRAWLING, "explore", false, "esplora le pagine vicine (funzionalità sperimentale)"));
-			options.addOption(new Option(TESTING, "test", false, "testa la compatibilità"));
+			options.addOption(new Option(TESTING, "test", false, "controlla il player audio remoto"));
 			
 		    try {
 		    	CommandLineParser parser = new GnuParser();
@@ -90,58 +90,58 @@ public class RockEatCli {
 							}
 						} else {
 							try {
-								System.out.println(Messages.PARSING_IN_PROGRESS);
-								Album album = controller.parse(url);
-								System.out.println(FormatUtils.formatAlbumData(album));
 								
 								if (commandLine.hasOption(TESTING)) {
-									System.out.println("RockEat sta facendo un controllo... ");
+									System.out.println(Messages.PARSING_IN_PROGRESS);
 									Eater eater = controller.findEater(url);
 									Boolean testResult = eater.selfDiagnosticTest(url);
 									if (BooleanUtils.isFalse(testResult)) {
-										System.out.println("RockEat ha trovato un player audio che non conosce");
+										System.out.println(Messages.TEST_ERROR);
 									} else {
-										System.out.println("RockEat conosce questo player audio");
+										System.out.println(Messages.TEST_SUCCESS);
 									}
-								}
-								
-								if (commandLine.hasOption(DOWNLOAD)) {
-									System.out.print("Download delle tracce: [");
-									for (Track track : album.getTracks()) {
-										System.out.print("=");
-										try {
-											controller.download(album, track);
-										} catch (DownloadException e) {
-											/* Silently ignore */
-										} catch (FileSaveException e) {
-											/* Silently ignore */
-										}
-									}
-									String label = StringUtils.EMPTY;
-									if (controller.getDownloadedTracks()>0) {
-										label = Messages.DOWNLOAD_COMPLETE;
-										label = StringUtils.replace(label,"{0}", Long.toString(controller.getDownloadedTracks()));
-										label = StringUtils.replace(label,"{1}", FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()));
-
-									} else {
-										label = Messages.ERROR_DOWNLOAD;
-									}
-									System.out.println("]\n" + label + "\n");
+								} else {
+									System.out.println(Messages.PARSING_IN_PROGRESS);
+									Album album = controller.parse(url);
+									System.out.println(FormatUtils.formatAlbumData(album));
 									
-									// Test diagnostico in caso di errore
-									if ((commandLine.hasOption(DOWNLOAD) && controller.getDownloadedTracks()==0)) {
-										System.out.println("RockEat sta cercando di verificare il problema...");
-										Eater eater = controller.findEater(url);
-										Boolean testResult = eater.selfDiagnosticTest(url);
-										if (BooleanUtils.isFalse(testResult)) {
-											System.out.println("Il player è cambiato, ecco il problema!");
+									if (commandLine.hasOption(DOWNLOAD)) {
+										System.out.print("Download delle tracce: [");
+										for (Track track : album.getTracks()) {
+											System.out.print("=");
+											try {
+												controller.download(album, track);
+											} catch (DownloadException e) {
+												/* Silently ignore */
+											} catch (FileSaveException e) {
+												/* Silently ignore */
+											}
+										}
+										String label = StringUtils.EMPTY;
+										if (controller.getDownloadedTracks()>0) {
+											label = Messages.DOWNLOAD_COMPLETE;
+											label = StringUtils.replace(label,"{0}", Long.toString(controller.getDownloadedTracks()));
+											label = StringUtils.replace(label,"{1}", FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()));
+
 										} else {
-											System.out.println("RockEat non capisce il problema ed è molto dispiaciuto.");
+											label = Messages.ERROR_DOWNLOAD;
+										}
+										System.out.println("]\n" + label + "\n");
+										
+										/* Self-diagnostic test on failure */
+										if (controller.getDownloadedTracks()==0) {
+											System.out.println(Messages.TESTING_IN_PROGRESS);
+											Eater eater = controller.findEater(url);
+											Boolean testResult = eater.selfDiagnosticTest(url);
+											if (BooleanUtils.isFalse(testResult)) {
+												System.out.println(Messages.TEST_NEW_PLAYER);
+											} else {
+												System.out.println(Messages.TEST_REASON_UNKNOWN);
+											}
 										}
 									}
+									
 								}
-								
-								
 
 							} catch (MalformedURLException e) {
 								System.out.println(Messages.ERROR_URL);
