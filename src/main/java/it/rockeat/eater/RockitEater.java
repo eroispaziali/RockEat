@@ -5,12 +5,15 @@ import it.rockeat.bean.Track;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.http.HttpUtils;
 import it.rockeat.util.HashUtils;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,6 +146,33 @@ public class RockitEater implements Eater {
 			responseEntity.writeTo(out);
 		} catch (IOException e) {
 			throw new ConnectionException(e);
+		}
+	}
+	
+	/**
+	 * Controlla se il player flash è stato cambiato
+	 * @param url
+	 * @return
+	 * @throws ConnectionException
+	 * @throws ParsingException
+	 * @throws MalformedURLException 
+	 */
+	@Override
+	public boolean selfDiagnosticTest(String url) throws ConnectionException, ParsingException, MalformedURLException {
+		url = ParsingUtils.addProtocolPrefixIfMissing(url);
+		URL parsedUrl = new URL(url);
+		InputStream pageStream = HttpUtils.httpGet(url);
+		Document doc = Jsoup.parse(ParsingUtils.streamToString(pageStream));
+		Element playerEl = doc.select("div.player embed[type=application/x-shockwave-flash]").first();
+		String playerUrl = StringUtils.EMPTY;
+		if (playerEl!=null && playerEl.hasAttr("src")) {
+			playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + playerEl.attr("src");
+			InputStream playerSwf = HttpUtils.httpGet(playerUrl);
+			String md5 = HashUtils.md5(playerSwf);
+			Boolean result = StringUtils.equals(md5, RockitEater.KNOWN_PLAYER_MD5);
+			return result;
+		} else {
+			throw new ParsingException("Player nella pagina non trovato");
 		}
 	}
 	

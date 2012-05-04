@@ -33,7 +33,7 @@ public class Controller {
 	private Long bytesDownloaded = 0L;
 	private Eater eater = new RockitEater();
 
-	private Eater findEater(String url) {
+	public Eater findEater(String url) {
 		return eater;
 	}
 	

@@ -44,7 +44,6 @@ public class HttpUtils {
 	    params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, AllowCircularRedirects);
 	    params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, httpSocketTimeout);
 	    params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, httpConnectionTimeout);
-	    
 	    return params;
 	}
 	

@@ -3,7 +3,7 @@ package it.rockeat.ui;
 import it.rockeat.Controller;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
-import it.rockeat.eater.RockitEater;
+import it.rockeat.eater.Eater;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
@@ -11,10 +11,7 @@ import it.rockeat.exception.ParsingException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.http.RockCrawler;
 import it.rockeat.util.FormatUtils;
-import it.rockeat.util.HashUtils;
-import it.rockeat.util.ParsingUtils;
 
-import java.io.InputStream;
 import java.net.MalformedURLException;
 
 import org.apache.commons.cli.CommandLine;
@@ -27,9 +24,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
@@ -69,24 +63,7 @@ public class RockEatCli {
 		       controller.start(RockCrawler.class, numberOfCrawlers);
 		}
 		
-		public static void test(String url) throws ConnectionException {
-			InputStream pageStream = HttpUtils.httpGet(url);
-			String htmlCode = ParsingUtils.streamToString(pageStream);
-			Document doc = Jsoup.parse(htmlCode);
-			Element playerEl = doc.select(".player embed[src=$.swf]").first();
-			String playerUrl = StringUtils.EMPTY;
-			if (playerEl!=null && playerEl.hasAttr("src")) {
-				playerUrl = playerEl.attr("src");
-				InputStream playerSwf = HttpUtils.httpGet("http://www.rockit.it"+playerUrl);
-				String md5 = HashUtils.md5(ParsingUtils.streamToString(playerSwf));
-				Boolean result = StringUtils.equals(md5, RockitEater.KNOWN_PLAYER_MD5);
-				System.out.println("Player trovato, verifica: " + BooleanUtils.toStringYesNo(result));
-				
-			} else {
-				System.out.println("Player non trovato");
-			}
-			
-		}
+		
 		
 		public static void main(String[] args) {
 			Options options = new Options();
@@ -94,7 +71,7 @@ public class RockEatCli {
 			options.addOption(new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3"));
 			options.addOption(new Option(DOWNLOAD, "download", false, "scarica tutte le tracce disponibili"));
 			options.addOption(new Option(CRAWLING, "explore", false, "esplora le pagine vicine (funzionalità sperimentale)"));
-			// options.addOption(new Option(TESTING, "test", false, "testa la compatibilità"));
+			options.addOption(new Option(TESTING, "test", false, "testa la compatibilità"));
 			
 		    try {
 		    	CommandLineParser parser = new GnuParser();
@@ -104,14 +81,7 @@ public class RockEatCli {
 				if (commandLine.hasOption(URL)) {
 					if (commandLine.hasOption(URL)) {
 						String url = commandLine.getOptionValue(URL);
-						if (commandLine.hasOption(TESTING)) {
-							try {
-								test(url);
-							} catch (ConnectionException e) {
-								System.out.println("Test non riuscito, passo oltre...");
-							}
-						}
-						if (false || commandLine.hasOption(CRAWLING)) {
+						if (commandLine.hasOption(CRAWLING)) {
 							System.out.println(Messages.PARSING_IN_PROGRESS);
 							try {
 								crawl(url);
@@ -123,6 +93,18 @@ public class RockEatCli {
 								System.out.println(Messages.PARSING_IN_PROGRESS);
 								Album album = controller.parse(url);
 								System.out.println(FormatUtils.formatAlbumData(album));
+								
+								if (commandLine.hasOption(TESTING)) {
+									System.out.println("RockEat sta facendo un controllo... ");
+									Eater eater = controller.findEater(url);
+									Boolean testResult = eater.selfDiagnosticTest(url);
+									if (BooleanUtils.isFalse(testResult)) {
+										System.out.println("RockEat ha trovato un player audio che non conosce");
+									} else {
+										System.out.println("RockEat conosce questo player audio");
+									}
+								}
+								
 								if (commandLine.hasOption(DOWNLOAD)) {
 									System.out.print("Download delle tracce: [");
 									for (Track track : album.getTracks()) {
@@ -145,7 +127,21 @@ public class RockEatCli {
 										label = Messages.ERROR_DOWNLOAD;
 									}
 									System.out.println("]\n" + label + "\n");
+									
+									// Test diagnostico in caso di errore
+									if ((commandLine.hasOption(DOWNLOAD) && controller.getDownloadedTracks()==0)) {
+										System.out.println("RockEat sta cercando di verificare il problema...");
+										Eater eater = controller.findEater(url);
+										Boolean testResult = eater.selfDiagnosticTest(url);
+										if (BooleanUtils.isFalse(testResult)) {
+											System.out.println("Il player è cambiato, ecco il problema!");
+										} else {
+											System.out.println("RockEat non capisce il problema ed è molto dispiaciuto.");
+										}
+									}
 								}
+								
+								
 
 							} catch (MalformedURLException e) {
 								System.out.println(Messages.ERROR_URL);
