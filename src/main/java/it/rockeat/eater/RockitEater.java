@@ -5,6 +5,7 @@ import it.rockeat.bean.Track;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.util.HashUtils;
 import it.rockeat.util.ParsingUtils;
@@ -15,7 +16,9 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -41,9 +44,19 @@ public class RockitEater implements Eater {
 	public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
 	public static final String TOKEN_PARAM = "rockitID";
 	public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
-	public static final String KNOWN_PLAYER_MD5 = "2594c03f4a6138919dbc692301c1da06";
-	public static final String PEPE = "-rapfuturistico";
-
+	
+	private Map<String,String> secretMap = new HashMap<String,String>();
+	private String secret = null;
+	private HttpClient httpClient = null;
+	
+	public RockitEater(String url, HttpClient httpClient) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
+		this.httpClient = httpClient;
+		secretMap.put("2594c03f4a6138919dbc692301c1da06","-rapfuturistico");
+		secretMap.put("38f724d06f88accae60c0deb83bd79a0","-vivarockit");
+		secretMap.put("1fa6e3e189d21df1f05e2e87dc9bd703","-ladroculo");
+		secret = findSecret(url);
+	}
+	
 	private static Track cleanup(Track track) {
 		String cleanedTitle = track.getTitle();
 		track.setTitle(StringUtils.isNotBlank(cleanedTitle) ? StringUtils.trim(cleanedTitle.replaceAll(" +", " ")) : cleanedTitle);
@@ -57,11 +70,7 @@ public class RockitEater implements Eater {
 		return track;
 	}
 	
-	private static String generateToken(Track track) {
-		return HashUtils.md5(track.getUrl() + PEPE);
-	}
-	
-	private Track lookupTrack(HttpClient httpClient, String id, String lookupUrl) throws ConnectionException, LookupException {
+	private Track lookupTrack(String id, String lookupUrl) throws ConnectionException, LookupException {
 		try {
 			HttpPost request = new HttpPost(lookupUrl);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
@@ -80,17 +89,13 @@ public class RockitEater implements Eater {
 		}
 	}
 
-
 	@Override
-	public Album parse(HttpClient httpClient, String htmlCode) throws ParsingException {
+	public Album parse(String htmlCode) throws ParsingException {
 		Album album = new Album();
 		String albumTitle = StringUtils.EMPTY;
 		String albumArtist = StringUtils.EMPTY;
 		List<Track> tracks = new ArrayList<Track>();
-		
 		Document doc = Jsoup.parse(htmlCode);
-		
-		
 		Elements playlistEl = doc.select(PARSING_TRACK_SELECTION_EXPRESSION);
 		Integer trackNumber = 0;
 		if (CollectionUtils.isNotEmpty(playlistEl)) {
@@ -99,7 +104,7 @@ public class RockitEater implements Eater {
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						trackNumber++;
-						Track track = lookupTrack(httpClient, trackId, TRACK_LOOKUP_URL);
+						Track track = lookupTrack(trackId, TRACK_LOOKUP_URL);
 						track.setId(trackId);
 						track.setOrder(trackNumber);
 						tracks.add(track);
@@ -112,7 +117,6 @@ public class RockitEater implements Eater {
 					}
 				}
 			}
-			
 			Elements title = doc.select("title");
 			if (CollectionUtils.isNotEmpty(title)) {
 				String meta = title.get(0).text();
@@ -135,12 +139,12 @@ public class RockitEater implements Eater {
 	}
 
 	@Override
-	public void download(HttpClient httpClient, Track track, OutputStream out) throws ConnectionException {
+	public void download(Track track, OutputStream out) throws ConnectionException {
 		try {
 			HttpPost request = new HttpPost(track.getUrl());
 			request.setHeader("Referer", REFERER_VALUE);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-			qparams.add(new BasicNameValuePair(TOKEN_PARAM, generateToken(track)));
+			qparams.add(new BasicNameValuePair(TOKEN_PARAM, HashUtils.md5(track.getUrl()+secret)));
 			request.setEntity(new UrlEncodedFormEntity(qparams));
 			HttpResponse response = httpClient.execute(request);
 			HttpEntity responseEntity = response.getEntity();
@@ -150,16 +154,17 @@ public class RockitEater implements Eater {
 		}
 	}
 	
-	/**
-	 * Controlla se il player flash è stato cambiato
-	 * @param url
-	 * @return
-	 * @throws ConnectionException
-	 * @throws ParsingException
-	 * @throws MalformedURLException 
-	 */
 	@Override
 	public boolean selfDiagnosticTest(String url) throws ConnectionException, ParsingException, MalformedURLException {
+		try {
+			findSecret(url);
+			return true;
+		} catch (UnknownPlayerException e) {
+			return false;
+		}
+	}
+	
+	private String findSecret(String url) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		URL parsedUrl = new URL(url);
 		InputStream pageStream = HttpUtils.httpGet(url);
@@ -170,11 +175,15 @@ public class RockitEater implements Eater {
 			playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + playerEl.attr("src");
 			InputStream playerSwf = HttpUtils.httpGet(playerUrl);
 			String md5 = HashUtils.md5(playerSwf);
-			Boolean result = StringUtils.equals(md5, RockitEater.KNOWN_PLAYER_MD5);
-			return result;
+			String secret = secretMap.get(md5);
+			if (secret!=null) {
+ 				return secret;
+			}
+			else {
+				throw new UnknownPlayerException(md5);
+			}
 		} else {
-			throw new ParsingException("Player nella pagina non trovato");
+			throw new ParsingException("Player non trovato nella pagina");
 		}
 	}
-	
 }

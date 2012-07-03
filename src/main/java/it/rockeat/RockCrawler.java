@@ -41,10 +41,11 @@ public class RockCrawler extends WebCrawler {
     @Override
 	public void visit(Page page) {
 		String url = page.getWebURL().getURL();
-		Eater eater = new RockitEater();
+		HttpClient client = HttpUtils.createClient();
+		
 		try {
-			HttpClient client = HttpUtils.createClient();
-			Album album = eater.parse(client, url);
+			Eater eater = new RockitEater(url, client);
+			Album album = eater.parse(url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(url + ": " + album);

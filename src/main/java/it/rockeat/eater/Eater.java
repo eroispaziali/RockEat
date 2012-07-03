@@ -8,12 +8,10 @@ import it.rockeat.exception.ParsingException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 
-import org.apache.http.client.HttpClient;
-
 public interface Eater {
 
-	public Album parse(HttpClient client, String htmlCode) throws ParsingException;
-	public void download(HttpClient client, Track track, OutputStream outputStream) throws ConnectionException;
+	public Album parse(String htmlCode) throws ParsingException;
+	public void download(Track track, OutputStream outputStream) throws ConnectionException;
 	public boolean selfDiagnosticTest(String url) throws ConnectionException, ParsingException, MalformedURLException;
 
 }

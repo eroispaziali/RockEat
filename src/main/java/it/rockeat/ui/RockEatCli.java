@@ -8,10 +8,12 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.http.RockCrawler;
 import it.rockeat.util.FormatUtils;
 
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 
 import org.apache.commons.cli.CommandLine;
@@ -38,6 +40,7 @@ public class RockEatCli {
 		private static final String CRAWLING = "e";
 		private static final String DOWNLOAD = "d";
 		private static final String TESTING = "c";
+		private static PrintStream out = System.out; //new PrintWriter(new OutputStreamWriter(System.out));
 		
 		private static void printHelp(Options options) {
 			HelpFormatter formatter = new HelpFormatter();
@@ -59,11 +62,9 @@ public class RockEatCli {
 		       RobotstxtServer robotstxtServer = new RobotstxtServer(robotstxtConfig, pageFetcher);
 		       CrawlController controller = new CrawlController(config, pageFetcher, robotstxtServer);
 		       controller.addSeed(url);
-		       System.out.println();
+		       out.println();
 		       controller.start(RockCrawler.class, numberOfCrawlers);
 		}
-		
-		
 		
 		public static void main(String[] args) {
 			Options options = new Options();
@@ -82,28 +83,28 @@ public class RockEatCli {
 					if (commandLine.hasOption(URL)) {
 						String url = commandLine.getOptionValue(URL);
 						if (commandLine.hasOption(CRAWLING)) {
-							System.out.println(Messages.PARSING_IN_PROGRESS);
+							out.println(Messages.PARSING_IN_PROGRESS);
 							try {
 								crawl(url);
 							} catch (Exception e) {
-								System.out.println("RockEat non riesce ad ispezionare nulla.");
+								out.println("RockEat non riesce ad ispezionare nulla.");
 							}
 						} else {
 							try {
 								
 								if (commandLine.hasOption(TESTING)) {
-									System.out.println(Messages.PARSING_IN_PROGRESS);
+									out.println(Messages.PARSING_IN_PROGRESS);
 									Eater eater = controller.findEater(url);
 									Boolean testResult = eater.selfDiagnosticTest(url);
 									if (BooleanUtils.isFalse(testResult)) {
-										System.out.println(Messages.TEST_ERROR);
+										out.println(Messages.TEST_ERROR);
 									} else {
-										System.out.println(Messages.TEST_SUCCESS);
+										out.println(Messages.TEST_SUCCESS);
 									}
 								} else {
-									System.out.println(Messages.PARSING_IN_PROGRESS);
+									out.println(Messages.PARSING_IN_PROGRESS);
 									Album album = controller.parse(url);
-									System.out.println(FormatUtils.formatAlbumData(album));
+									out.println(FormatUtils.formatAlbumData(album));
 									
 									if (commandLine.hasOption(DOWNLOAD)) {
 										Integer progress = 0;
@@ -111,8 +112,8 @@ public class RockEatCli {
 										for (Track track : album.getTracks()) {
 											progress++;
 											String st = StringUtils.leftPad(">", progress+1, "=") + StringUtils.leftPad("", count-progress, " ");
-											System.out.print("Download: [" + st + "] "+Long.toString(controller.getDownloadedTracks()+1) + "/" + Integer.toString(count));
-											System.out.print("\r");
+											out.print("Download: [" + st + "] "+Long.toString(controller.getDownloadedTracks()+1) + "/" + Integer.toString(count));
+											out.print("\r");
 											try {
 												controller.download(album, track);
 											} catch (DownloadException e) {
@@ -130,17 +131,16 @@ public class RockEatCli {
 										} else {
 											label = Messages.ERROR_DOWNLOAD;
 										}
-										System.out.println("\n" + label);
+										out.println("\n" + label);
 										
 										/* Self-diagnostic test on failure */
 										if (controller.getDownloadedTracks()==0) {
-											System.out.println(Messages.TESTING_IN_PROGRESS);
 											Eater eater = controller.findEater(url);
 											Boolean testResult = eater.selfDiagnosticTest(url);
 											if (BooleanUtils.isFalse(testResult)) {
-												System.out.println(Messages.TEST_NEW_PLAYER);
+												out.println(Messages.TEST_NEW_PLAYER);
 											} else {
-												System.out.println(Messages.TEST_REASON_UNKNOWN);
+												out.println(Messages.TEST_REASON_UNKNOWN);
 											}
 										}
 									}
@@ -148,14 +148,15 @@ public class RockEatCli {
 								}
 
 							} catch (MalformedURLException e) {
-								System.out.println(Messages.ERROR_URL);
+								out.println(Messages.ERROR_URL);
 							} catch (ConnectionException e) {
-								System.out.println(Messages.ERROR_CONNECTION);
+								out.println(Messages.ERROR_CONNECTION);
 							} catch (ParsingException e) {
-								System.out.println(Messages.NOTHING_FOUND);
+								out.println(Messages.NOTHING_FOUND);
+							} catch (UnknownPlayerException e) {
+								out.println(Messages.ERROR_PLAYER);
 							}
 						}
-			        	
 			        }
 					
 				} else {

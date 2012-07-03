@@ -9,6 +9,7 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
@@ -31,33 +32,32 @@ public class Controller {
 	private Boolean id3TaggingEnabled = Boolean.TRUE;
 	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
-	private Eater eater = new RockitEater();
 
-	public Eater findEater(String url) {
-		return eater;
+	public Eater findEater(String url) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
+		HttpClient httpClient = HttpUtils.createClient();
+		return new RockitEater(url, httpClient);
 	}
 	
 	@SuppressWarnings("unused")
-	public Album parse(String url) throws MalformedURLException, ConnectionException, ParsingException {
+	public Album parse(String url) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		URL parsedUrl = new URL(url);
 		Eater eater = findEater(url);
 		InputStream pageStream = HttpUtils.httpGet(url);
 		String htmlCode = ParsingUtils.streamToString(pageStream);
 		HttpClient httpClient = HttpUtils.createClient();
-		Album album = eater.parse(httpClient, htmlCode);
+		Album album = eater.parse(htmlCode);
 		album.setUrl(url);
 		return album;
 	}
 	
-	public void download(Album album, Track track) throws ConnectionException, DownloadException, FileSaveException {
+	public void download(Album album, Track track) throws ConnectionException, DownloadException, FileSaveException, UnknownPlayerException, MalformedURLException, ParsingException {
 		Eater eater = findEater(album.getUrl());
 		String folderName = FileManagementUtils.createFolder(album);
 		String filePath = folderName + FileManagementUtils.createFilename(album, track); 
 		try {
-			HttpClient httpClient = HttpUtils.createClient();
 			OutputStream outputStream = new FileOutputStream(filePath);
-			eater.download(httpClient,track,outputStream);
+			eater.download(track,outputStream);
 			outputStream.close();
 			File fileOnDisk = new File(filePath);
 			if (FileUtils.sizeOf(fileOnDisk) == 0) {
@@ -77,7 +77,6 @@ public class Controller {
 		} catch (IOException e) {
 			throw new FileSaveException(e);
 		}
-
 	}
 
 	public Boolean getId3TaggingEnabled() {
