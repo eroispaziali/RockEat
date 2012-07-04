@@ -1,15 +1,16 @@
 package it.rockeat;
 
+import it.rockeat.backend.Backend;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
 import it.rockeat.eater.Eater;
 import it.rockeat.eater.RockitEater;
+import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
@@ -32,14 +33,24 @@ public class Controller {
 	private Boolean id3TaggingEnabled = Boolean.TRUE;
 	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
+	private Eater eater;
+	private Backend backend;
+	HttpClient httpClient;
 
-	public Eater findEater(String url) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
-		HttpClient httpClient = HttpUtils.createClient();
-		return new RockitEater(url, httpClient);
+	public Controller() {
+		httpClient = HttpUtils.createClient();
+		backend = new Backend(httpClient);
+	}
+	
+	public Eater findEater(String url) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+		if (eater==null) {
+			eater = new RockitEater(url, httpClient, backend); 		
+		} 
+		return eater;
 	}
 	
 	@SuppressWarnings("unused")
-	public Album parse(String url) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
+	public Album parse(String url) throws BackendException, MalformedURLException, ConnectionException, ParsingException {
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		URL parsedUrl = new URL(url);
 		Eater eater = findEater(url);
@@ -51,7 +62,7 @@ public class Controller {
 		return album;
 	}
 	
-	public void download(Album album, Track track) throws ConnectionException, DownloadException, FileSaveException, UnknownPlayerException, MalformedURLException, ParsingException {
+	public void download(Album album, Track track) throws BackendException, ConnectionException, DownloadException, FileSaveException, MalformedURLException, ParsingException {
 		Eater eater = findEater(album.getUrl());
 		String folderName = FileManagementUtils.createFolder(album);
 		String filePath = folderName + FileManagementUtils.createFilename(album, track); 
@@ -64,8 +75,11 @@ public class Controller {
 				FileUtils.deleteQuietly(fileOnDisk);
 				throw new DownloadException();
 			} else {
+				/* il download sta funzionando */
 				bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
 				downloadedTracks++;
+				eater.noticeDownloadSuccess();
+				// backend.trackDownload(track, bytesDownloaded);
 			}
 			if (BooleanUtils.isTrue(id3TaggingEnabled)) {
 				try {

@@ -1,5 +1,6 @@
 package it.rockeat;
 
+import it.rockeat.backend.Backend;
 import it.rockeat.bean.Album;
 import it.rockeat.eater.Eater;
 import it.rockeat.eater.RockitEater;
@@ -44,7 +45,7 @@ public class RockCrawler extends WebCrawler {
 		HttpClient client = HttpUtils.createClient();
 		
 		try {
-			Eater eater = new RockitEater(url, client);
+			Eater eater = new RockitEater(url, client, new Backend(client));
 			Album album = eater.parse(url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);

@@ -4,16 +4,18 @@ import it.rockeat.Controller;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
 import it.rockeat.eater.Eater;
+import it.rockeat.eater.RockitEater;
+import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.http.RockCrawler;
 import it.rockeat.util.FormatUtils;
 
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 
 import org.apache.commons.cli.CommandLine;
@@ -37,10 +39,19 @@ public class RockEatCli {
 		 
 		private static final String DISABLE_TAGGING = "t";
 		private static final String URL = "u";
-		private static final String CRAWLING = "e";
-		private static final String DOWNLOAD = "d";
+		private static final String CRAWLING = "x";
+		private static final String EAT = "e";
 		private static final String TESTING = "c";
-		private static PrintStream out = System.out; //new PrintWriter(new OutputStreamWriter(System.out));
+		private static final String SECRET = "s";
+		private static PrintStream out;
+		
+		public RockEatCli() {
+			try {
+				out = new PrintStream(System.out, true, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				out = System.out;
+			}
+		}
 		
 		private static void printHelp(Options options) {
 			HelpFormatter formatter = new HelpFormatter();
@@ -67,12 +78,20 @@ public class RockEatCli {
 		}
 		
 		public static void main(String[] args) {
+			
+			try {
+				out = new PrintStream(System.out, true, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				out = System.out;
+			}
+			
 			Options options = new Options();
 			options.addOption(new Option(URL, "url", true, "specifica l'indirizzo della pagina da analizzare"));
+			options.addOption(new Option(SECRET, "secret", true, "specifica un secret da utilizzare"));
 			options.addOption(new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3"));
-			options.addOption(new Option(DOWNLOAD, "download", false, "scarica tutte le tracce disponibili"));
+			options.addOption(new Option(EAT, "eat", false, "mangia tutte le tracce disponibili"));
 			options.addOption(new Option(CRAWLING, "explore", false, "esplora le pagine vicine (funzionalità sperimentale)"));
-			options.addOption(new Option(TESTING, "test", false, "controlla il player audio remoto"));
+			options.addOption(new Option(TESTING, "test", false, "verifica di essere in grado di scaricare"));
 			
 		    try {
 		    	CommandLineParser parser = new GnuParser();
@@ -82,87 +101,92 @@ public class RockEatCli {
 				if (commandLine.hasOption(URL)) {
 					if (commandLine.hasOption(URL)) {
 						String url = commandLine.getOptionValue(URL);
+						Eater eater = controller.findEater(url);
+						
 						if (commandLine.hasOption(CRAWLING)) {
-							out.println(Messages.PARSING_IN_PROGRESS);
+							out.println(Messages.PARSE_IN_PROGRESS);
 							try {
 								crawl(url);
 							} catch (Exception e) {
-								out.println("RockEat non riesce ad ispezionare nulla.");
+								out.println(Messages.ERROR_CRAWLING);
 							}
 						} else {
-							try {
 								
-								if (commandLine.hasOption(TESTING)) {
-									out.println(Messages.PARSING_IN_PROGRESS);
-									Eater eater = controller.findEater(url);
-									Boolean testResult = eater.selfDiagnosticTest(url);
-									if (BooleanUtils.isFalse(testResult)) {
-										out.println(Messages.TEST_ERROR);
-									} else {
-										out.println(Messages.TEST_SUCCESS);
-									}
-								} else {
-									out.println(Messages.PARSING_IN_PROGRESS);
-									Album album = controller.parse(url);
-									out.println(FormatUtils.formatAlbumData(album));
-									
-									if (commandLine.hasOption(DOWNLOAD)) {
-										Integer progress = 0;
-										Integer count = album.getTracksCount();
-										for (Track track : album.getTracks()) {
-											progress++;
-											String st = StringUtils.leftPad(">", progress+1, "=") + StringUtils.leftPad("", count-progress, " ");
-											out.print("Download: [" + st + "] "+Long.toString(controller.getDownloadedTracks()+1) + "/" + Integer.toString(count));
-											out.print("\r");
-											try {
-												controller.download(album, track);
-											} catch (DownloadException e) {
-												/* Silently ignore */
-											} catch (FileSaveException e) {
-												/* Silently ignore */
-											}
-										}
-										String label = StringUtils.EMPTY;
-										if (controller.getDownloadedTracks()>0) {
-											label = Messages.DOWNLOAD_COMPLETE;
-											label = StringUtils.replace(label,"{0}", Long.toString(controller.getDownloadedTracks()));
-											label = StringUtils.replace(label,"{1}", FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()));
-
-										} else {
-											label = Messages.ERROR_DOWNLOAD;
-										}
-										out.println("\n" + label);
-										
-										/* Self-diagnostic test on failure */
-										if (controller.getDownloadedTracks()==0) {
-											Eater eater = controller.findEater(url);
-											Boolean testResult = eater.selfDiagnosticTest(url);
-											if (BooleanUtils.isFalse(testResult)) {
-												out.println(Messages.TEST_NEW_PLAYER);
-											} else {
-												out.println(Messages.TEST_REASON_UNKNOWN);
-											}
-										}
-									}
-									
+							if (commandLine.hasOption(SECRET)) {
+								if (eater instanceof RockitEater) {
+									((RockitEater)eater).setSecret(commandLine.getOptionValue(SECRET));
 								}
-
-							} catch (MalformedURLException e) {
-								out.println(Messages.ERROR_URL);
-							} catch (ConnectionException e) {
-								out.println(Messages.ERROR_CONNECTION);
-							} catch (ParsingException e) {
-								out.println(Messages.NOTHING_FOUND);
-							} catch (UnknownPlayerException e) {
-								out.println(Messages.ERROR_PLAYER);
 							}
+							
+							if (commandLine.hasOption(TESTING)) {
+								out.println(Messages.PARSE_IN_PROGRESS);
+								
+								Boolean testResult = eater.runTest();
+								if (BooleanUtils.isFalse(testResult)) {
+									out.println(Messages.TEST_ERROR);
+								} else {
+									out.println(Messages.TEST_SUCCESS);
+								}
+							} else {
+								out.println(Messages.PARSE_IN_PROGRESS);
+								Album album = controller.parse(url);
+								out.println(FormatUtils.formatAlbumData(album));
+								
+								if (commandLine.hasOption(EAT)) {
+									Integer progress = 0;
+									Integer count = album.getTracksCount();
+									for (Track track : album.getTracks()) {
+										progress++;
+										String st = StringUtils.leftPad(">", progress+1, "=") + StringUtils.leftPad("", count-progress, " ");
+										out.print("Download: [" + st + "] "+Long.toString(controller.getDownloadedTracks()+1) + "/" + Integer.toString(count));
+										out.print("\r");
+										try {
+											controller.download(album, track);
+										} catch (DownloadException e) {
+											/* Silently ignore */
+										} catch (FileSaveException e) {
+											/* Silently ignore */
+										}
+									}
+									String label = StringUtils.EMPTY;
+									if (controller.getDownloadedTracks()>0) {
+										label = Messages.DOWNLOAD_COMPLETE;
+										label = StringUtils.replace(label,"{0}", Long.toString(controller.getDownloadedTracks()));
+										label = StringUtils.replace(label,"{1}", FileUtils.byteCountToDisplaySize(controller.getBytesDownloaded()));
+
+									} else {
+										label = Messages.ERROR_DOWNLOAD;
+									}
+									out.println("\n" + label);
+									
+									/* Self-diagnostic test on failure */
+									if (controller.getDownloadedTracks()==0) {
+										Boolean testResult = eater.runTest();
+										if (BooleanUtils.isFalse(testResult)) {
+											out.println(Messages.TEST_ERROR);
+										} else {
+											out.println(Messages.TEST_REASON_UNKNOWN);
+										}
+									}
+								}
+									
+							
+							} 
 						}
 			        }
 					
 				} else {
 					printHelp(options);
 				}
-		    } catch(ParseException exp) {
+		    } catch (MalformedURLException e) {
+				out.println(Messages.ERROR_URL);
+			} catch (ParsingException e) {
+				out.println(Messages.NOTHING_FOUND);
+			} catch (ConnectionException e) {
+				out.println(Messages.ERROR_CONNECTION);
+			} catch (BackendException e) {
+				out.println(Messages.ERROR_PLAYER);
+			} catch(ParseException exp) {
 		    	printHelp(options);
 			} 
 		}

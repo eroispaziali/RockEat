@@ -1,11 +1,12 @@
 package it.rockeat.eater;
 
+import it.rockeat.backend.Backend;
 import it.rockeat.bean.Album;
 import it.rockeat.bean.Track;
+import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.util.HashUtils;
 import it.rockeat.util.ParsingUtils;
@@ -27,6 +28,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
@@ -45,16 +47,31 @@ public class RockitEater implements Eater {
 	public static final String TOKEN_PARAM = "rockitID";
 	public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
 	
-	private Map<String,String> secretMap = new HashMap<String,String>();
-	private String secret = null;
-	private HttpClient httpClient = null;
+	private Map<String,String> keyPairs = new HashMap<String,String>();
+	private String url;
+	private Document page;
+	private String playerMd5;
+	private String secret;
+	private HttpClient httpClient;
+	private Backend backend;
 	
-	public RockitEater(String url, HttpClient httpClient) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
+	public RockitEater(String url, HttpClient httpClient, Backend backend) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+		this.url = url;
 		this.httpClient = httpClient;
-		secretMap.put("2594c03f4a6138919dbc692301c1da06","-rapfuturistico");
-		secretMap.put("38f724d06f88accae60c0deb83bd79a0","-vivarockit");
-		secretMap.put("1fa6e3e189d21df1f05e2e87dc9bd703","-ladroculo");
-		secret = findSecret(url);
+		this.page = fetchDocument();
+		this.playerMd5 = analyzePlayer();
+		this.backend = backend;
+		this.keyPairs = backend.retrieveKnownKeyPairs();
+		this.secret = keyPairs.get(playerMd5);
+	}
+	
+	public RockitEater(String url, HttpClient httpClient, Backend backend, String secret) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+		this.url = url;
+		this.httpClient = httpClient;
+		this.playerMd5 = analyzePlayer();
+		this.backend = backend;
+		this.keyPairs = backend.retrieveKnownKeyPairs();
+		this.secret = secret;		
 	}
 	
 	private static Track cleanup(Track track) {
@@ -155,35 +172,51 @@ public class RockitEater implements Eater {
 	}
 	
 	@Override
-	public boolean selfDiagnosticTest(String url) throws ConnectionException, ParsingException, MalformedURLException {
+	public boolean runTest() {
+		return (keyPairs.containsKey(playerMd5)) ? true : false;
+	}
+
+	private Document fetchDocument() throws ConnectionException {
 		try {
-			findSecret(url);
-			return true;
-		} catch (UnknownPlayerException e) {
-			return false;
+			HttpGet request = new HttpGet(url);
+			HttpResponse response = httpClient.execute(request);
+			HttpEntity responseEntity = response.getEntity();
+			InputStream pageStream = responseEntity.getContent();		
+			return Jsoup.parse(ParsingUtils.streamToString(pageStream));
+		} catch (Exception e) {
+			throw new ConnectionException(e);
 		}
 	}
 	
-	private String findSecret(String url) throws ConnectionException, ParsingException, MalformedURLException, UnknownPlayerException {
-		url = ParsingUtils.addProtocolPrefixIfMissing(url);
+	private String analyzePlayer() throws ConnectionException, ParsingException, MalformedURLException {
 		URL parsedUrl = new URL(url);
-		InputStream pageStream = HttpUtils.httpGet(url);
-		Document doc = Jsoup.parse(ParsingUtils.streamToString(pageStream));
-		Element playerEl = doc.select("div.player embed[type=application/x-shockwave-flash]").first();
+		Element playerEl = page.select("div.player embed[type=application/x-shockwave-flash]").first();
 		String playerUrl = StringUtils.EMPTY;
 		if (playerEl!=null && playerEl.hasAttr("src")) {
 			playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + playerEl.attr("src");
 			InputStream playerSwf = HttpUtils.httpGet(playerUrl);
-			String md5 = HashUtils.md5(playerSwf);
-			String secret = secretMap.get(md5);
-			if (secret!=null) {
- 				return secret;
-			}
-			else {
-				throw new UnknownPlayerException(md5);
-			}
+			return HashUtils.md5(playerSwf);
 		} else {
 			throw new ParsingException("Player non trovato nella pagina");
 		}
+	}
+	
+	public void noticeDownloadSuccess() {
+		if (!keyPairs.containsKey(playerMd5)) {
+			try {
+				backend.storeKeyPair(playerMd5, secret);
+				keyPairs.put(playerMd5, secret);
+			} catch (BackendException e) {
+				/* non sono riuscito a salvare il keypair, ignoro silenziosamente */
+			}
+		}
+	}
+
+	public String getSecret() {
+		return secret;
+	}
+
+	public void setSecret(String secret) {
+		this.secret = secret;
 	}
 }
