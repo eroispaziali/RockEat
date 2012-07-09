@@ -15,43 +15,42 @@ import org.apache.commons.lang3.StringUtils;
 
 public class DownloadTask extends SwingWorker<Void, Void> {
 
-    private RockitAlbum album;
+	private RockitAlbum album;
+    private RockEatUI rockEatUI;
     private String label;
-    private RockEatGui ui;
 
-    public DownloadTask(RockEatGui ui, RockitAlbum album) {
+    public DownloadTask(RockEatUI jRockEatUI, RockitAlbum album) {
         this.album = album;
-        this.ui = ui;
+        this.rockEatUI = jRockEatUI;
     }
 
     @Override
     public Void doInBackground() {
-        ui.progressBar.setIndeterminate(false);
-        ui.progressBar.setMinimum(0);
-        ui.progressBar.setMaximum(album.getTracksCount() + 1);
-        ui.progressBar.setStringPainted(true);
+    	rockEatUI.getProgressBar().setIndeterminate(false);
+    	rockEatUI.getProgressBar().setMinimum(0);
+    	rockEatUI.getProgressBar().setMaximum(album.getTracksCount() + 1);
+    	rockEatUI.getProgressBar().setStringPainted(true);
 
         Integer count = 0;
-        ui.progressBar.setIndeterminate(false);
         for (RockitTrack track : album.getTracks()) {
             label = track.toString();
             try {
                 setProgress(++count);
-                ui.controller.download(album, track);
+                rockEatUI.getController().download(album, track);
             } catch (FileSaveException e) {
-                JOptionPane.showMessageDialog(ui, Messages.ERROR_FILEWRITE, Messages.TITLE, 0);
+                JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_FILEWRITE, Messages.TITLE, 0);
                 setProgress(ImageObserver.ABORT);
             } catch (DownloadException e) {
-                JOptionPane.showMessageDialog(ui, Messages.ERROR_PLAYER, Messages.TITLE, 0);
+                JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_PLAYER, Messages.TITLE, 0);
                 setProgress(ImageObserver.ABORT);
             } catch (Exception e) {
                 setProgress(ImageObserver.ERROR);
             }
         }
-        if (ui.controller.getDownloadedTracks() > 0) {
+        if (rockEatUI.getController().getDownloadedTracks() > 0) {
             label = Messages.DOWNLOAD_COMPLETE;
-            label = StringUtils.replace(label, "{0}", Long.toString(ui.controller.getDownloadedTracks()));
-            label = StringUtils.replace(label, "{1}", FileUtils.byteCountToDisplaySize(ui.controller.getBytesDownloaded()));
+            label = StringUtils.replace(label, "{0}", Long.toString(rockEatUI.getController().getDownloadedTracks()));
+            label = StringUtils.replace(label, "{1}", FileUtils.byteCountToDisplaySize(rockEatUI.getController().getBytesDownloaded()));
         } else {
             label = Messages.ERROR_DOWNLOAD;
         }
@@ -61,7 +60,7 @@ public class DownloadTask extends SwingWorker<Void, Void> {
 
     @Override
     public void done() {
-        ui.uiReset();
+        /* do nothing */
     }
 
     public String getLabel() {

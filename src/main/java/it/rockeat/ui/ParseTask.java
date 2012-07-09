@@ -68,10 +68,8 @@ public class ParseTask extends SwingWorker<Void, Void> {
 
     @Override
     public void done() {
-        jRockEatUI.parsingFinished();                
-        
         if (album != null) {
-            jRockEatUI.updateInfoPanel(album);
+            jRockEatUI.startDownload(album);
         }
 
 

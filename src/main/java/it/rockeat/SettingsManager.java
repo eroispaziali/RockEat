@@ -73,7 +73,7 @@ public class SettingsManager {
 	public void addNewKnownPlayer(String md5, String key) {
 		try {
 			Map<String, String> keyPairs = getSettings().getKeypairs();
-			backend.storeKeyPair(md5, key);
+			backend.storeKeypair(md5, key);
 	        keyPairs.put(md5, key);
 	        saveToFile();
 		} catch (BackendException e) {

@@ -1,7 +1,6 @@
 package it.rockeat.backend;
 
 import it.rockeat.exception.BackendException;
-import it.rockeat.model.RockitTrack;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.IOException;
@@ -61,11 +60,11 @@ public class Backend {
 	public Map<String,String> retrieveKeypairs() throws BackendException {
 		try {
             logger.log(Level.INFO, "Interrogazione backend");
-			String json = ParsingUtils.streamToString(doParseGet("classes/" + KeyPair.REMOTE_CLASSNAME));
+			String json = ParsingUtils.streamToString(doParseGet("classes/" + Keypair.REMOTE_CLASSNAME));
 			Gson gson = new Gson();
 			KeyPairHolder holder = gson.fromJson(json, KeyPairHolder.class);
 			Map<String,String> secretMap = new HashMap<String,String>();
-			KeyPair[] results = holder.getResults();
+			Keypair[] results = holder.getResults();
 			for (int i=0;i<results.length;i++) {
 				secretMap.put(results[i].getMd5(), results[i].getSecret());
 			}
@@ -78,14 +77,14 @@ public class Backend {
 		}
 	}
 	
-	@SuppressWarnings("unused")
-	public void storeKeyPair(String md5, String secret) throws BackendException {
+	public String storeKeypair(String md5, String secret) throws BackendException {
 		try {
 			logger.log(Level.INFO, "Salvataggio nuovo keypair: [{0},{1}]", new Object[]{md5, secret});
-			KeyPair keyPair = new KeyPair(md5, secret);
-			String json = ParsingUtils.streamToString(doParseStore("classes/" + KeyPair.REMOTE_CLASSNAME, keyPair));
+			Keypair keyPair = new Keypair(md5, secret);
+			String json = ParsingUtils.streamToString(doParseStore("classes/" + Keypair.REMOTE_CLASSNAME, keyPair));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
+			return response.getObjectId();
 		} catch (JsonSyntaxException e) {
             logger.log(Level.INFO, "Risposta inattesa del backend");
 			throw new BackendException("Risposta inattesa dal backend", e);
@@ -94,12 +93,12 @@ public class Backend {
 		}
 	}
 	
-	@SuppressWarnings("unused")
-	public void trackActivity(Activity activity) throws BackendException {
+	public String trackActivity(Activity activity) throws BackendException {
 		try {
 			String json = ParsingUtils.streamToString(doParseStore("classes/" + Activity.REMOTE_CLASSNAME, activity));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
+			return response.getObjectId();
 		} catch (JsonSyntaxException e) {
 			throw new BackendException("Risposta inattesa dal backend", e);
 		} catch (Exception e) {

@@ -1,7 +1,7 @@
 package it.rockeat.backend;
 
 
-public class KeyPair {
+public class Keypair {
 	
 	public final static String REMOTE_CLASSNAME = "KeyPair";
 	
@@ -11,11 +11,11 @@ public class KeyPair {
 	private String createdAt;
 	private String updatedAt;
 	
-	public KeyPair() {
+	public Keypair() {
 		super();
 	}
 	
-	public KeyPair(String md5, String secret) {
+	public Keypair(String md5, String secret) {
 		this.md5 = md5;
 		this.secret = secret;
 	}

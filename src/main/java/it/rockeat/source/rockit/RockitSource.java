@@ -163,23 +163,25 @@ public class RockitSource implements MusicSource {
                 album.setTitle(albumTitle);
             }
             album.setTracks(tracks);            
-            logger.log(Level.INFO, "Trovato un elemento: {0}", album.toString());
+            logger.log(Level.INFO, "Trovato: {0}", album.toString());
             return album;
         } else {
             /* Nothing found */
            logger.log(Level.INFO, "Nessun elemento trovato");
-            throw new ParsingException();
+           throw new ParsingException();
         }
     }
 
     @Override
     public void download(RockitTrack track, OutputStream out) throws ConnectionException {
         try {
-            System.out.println("Downloading " + track.toString());
+        	Map<String, String> keyPairs = settingsManager.getSettings().getKeypairs();
+        	String secretInUse = keyPairs.get(playerMd5);
+        	logger.log(Level.INFO, "Download di {0} in corso...", track.toString());
             HttpPost request = new HttpPost(track.getUrl());
             request.setHeader("Referer", REFERER_VALUE);
             List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-            qparams.add(new BasicNameValuePair(TOKEN_PARAM, HashUtils.md5(track.getUrl() + secret)));
+            qparams.add(new BasicNameValuePair(TOKEN_PARAM, HashUtils.md5(track.getUrl() + secretInUse)));
             request.setEntity(new UrlEncodedFormEntity(qparams));
             HttpResponse response = httpClient.execute(request);
             HttpEntity responseEntity = response.getEntity();
@@ -214,7 +216,7 @@ public class RockitSource implements MusicSource {
 
     private void analyzePlayer() throws ConnectionException, ParsingException, MalformedURLException {
     	String tmpFilename = "rockeat.tmp";
-    	logger.log(Level.INFO, "Analisi player in corso");
+    	logger.log(Level.INFO, "Analisi player...");
         URL parsedUrl = new URL(url);
         Element playerEl = page.select("div.player embed[type=application/x-shockwave-flash]").first();
         String playerUrl;
@@ -226,20 +228,25 @@ public class RockitSource implements MusicSource {
 				IOUtils.copy(playerData,tmpFile); 
 				playerMd5 = (HashUtils.md5(new FileInputStream(tmpFilename)));
 				if (!isPlayerKnown(playerMd5)) {
+					logger.log(Level.INFO, "Rilevato nuovo player, estrazione chiave...");
 					secret = findSecretKey(tmpFilename);
 					settingsManager.addNewKnownPlayer(playerMd5, secret);
 				}
 				FileUtils.deleteQuietly(new File(tmpFilename));
-			} catch (Exception e) {
+			} catch (ParsingException e) {
 				/* Non riesco a leggere il secret dal sorgente */
+				throw e;
+			} catch (IOException e) {
+				/* Non riesco a leggere il secret dal sorgente */
+				throw new ParsingException(e);
 			}
         } else {
-            System.out.println("Player non trovato nella pagina");
+        	logger.log(Level.INFO, "Player non trovato nella pagina");
             throw new ParsingException("Player non trovato nella pagina");
         }
     }
     
-    private static String findSecretKey(String swfFile) {
+    private static String findSecretKey(String swfFile) throws ParsingException {
     	try {
 	    	ActionScriptUtils.decompileSwf(swfFile, TEMP_FOLDER);
 			String source = FileManagementUtils.findFile(TEMP_FOLDER, PLAYER_SOURCE_FILE);
@@ -249,12 +256,12 @@ public class RockitSource implements MusicSource {
 			return secret;
     	} catch (FileNotFoundException e) {
     		/* SWF not found */
-    		FileUtils.deleteQuietly(new File(TEMP_FOLDER)); 	
-    		return null;
+    		FileUtils.deleteQuietly(new File(TEMP_FOLDER)); 
+    		throw new ParsingException(e);
     	} catch (IOException e) {
     		/* Error while reading SWF */
     		FileUtils.deleteQuietly(new File(TEMP_FOLDER)); 	
-    		return null;
+    		throw new ParsingException(e);
     	}
     }
     

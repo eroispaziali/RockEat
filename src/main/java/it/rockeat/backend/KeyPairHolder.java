@@ -2,13 +2,13 @@ package it.rockeat.backend;
 
 public class KeyPairHolder {
 	
-	private KeyPair[] results;
+	private Keypair[] results;
 
-	public KeyPair[] getResults() {
+	public Keypair[] getResults() {
 		return results;
 	}
 
-	public void setResults(KeyPair[] results) {
+	public void setResults(Keypair[] results) {
 		this.results = results;
 	}
 }

@@ -29,6 +29,7 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
 	private static final long serialVersionUID = -1600902258431092978L;
 	private SourceManager sourceManager;
     private ParseTask parseTask;
+    private DownloadTask downloadTask;
 
     public void startParsing(String url) {
         try {
@@ -52,20 +53,16 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
             JOptionPane.PLAIN_MESSAGE);
     }
 
-    public void parsingFinished() {
-        buttonParse.setEnabled(true);
-        urlField.setEnabled(true);
-        progressBar.setIndeterminate(false);
-        progressBar.setString("");
-        progressBar.setStringPainted(true);
-    }
 
-    public void parsingFoundNothing() {
-        parsingFinished();
-    }
-
-    public void updateInfoPanel(RockitAlbum album) {
-        parsingFinished();
+    public void startDownload(RockitAlbum album) {
+		buttonParse.setEnabled(true);
+		urlField.setEnabled(true);
+		progressBar.setIndeterminate(false);
+		progressBar.setString("");
+		progressBar.setStringPainted(true);
+		downloadTask = new DownloadTask(this, album);
+		downloadTask.addPropertyChangeListener(this);
+		downloadTask.execute();
     }
 
     public JProgressBar getProgressBar() {
@@ -96,9 +93,9 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
         buttonParse = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("RockEat");
+        setTitle(Messages.TITLE);
 
-        urlField.setText("http://www.rockit.it/julieshaircut/album/the-wildlife-variations-ep/19680");
+        urlField.setText("");
         urlField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 urlFieldActionPerformed(evt);
