@@ -26,7 +26,8 @@ import javax.swing.event.DocumentListener;
  */
 public class RockEatUI extends javax.swing.JFrame implements ActionListener, PropertyChangeListener {
 
-    private SourceManager controller;
+	private static final long serialVersionUID = -1600902258431092978L;
+	private SourceManager sourceManager;
     private ParseTask parseTask;
 
     public void startParsing(String url) {
@@ -72,11 +73,11 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     }
 
     public SourceManager getController() {
-        return controller;
+        return sourceManager;
     }
 
     public RockEatUI() {
-        controller = new SourceManager();
+        sourceManager = new SourceManager();
         initComponents();
     }
 

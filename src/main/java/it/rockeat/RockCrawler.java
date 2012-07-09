@@ -1,6 +1,5 @@
 package it.rockeat;
 
-import it.rockeat.backend.Backend;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.http.HttpUtils;
 import it.rockeat.model.RockitAlbum;
@@ -45,8 +44,9 @@ public class RockCrawler extends WebCrawler {
 		HttpClient client = HttpUtils.createClient();
 		
 		try {
-			MusicSource eater = new RockitSource(url, client, new Backend(client));
-			RockitAlbum album = eater.parse(url);
+			SettingsManager settingsManager = new SettingsManager(client);
+			MusicSource musicSource = new RockitSource(url, client, settingsManager);
+			RockitAlbum album = musicSource.parse(url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(url + ": " + album);

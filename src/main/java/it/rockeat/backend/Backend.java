@@ -58,7 +58,7 @@ public class Backend {
 		return responseEntity.getContent();		
 	}
 	
-	public Map<String,String> retrieveKnownKeyPairs() throws BackendException {
+	public Map<String,String> retrieveKeypairs() throws BackendException {
 		try {
             logger.log(Level.INFO, "Interrogazione backend");
 			String json = ParsingUtils.streamToString(doParseGet("classes/" + KeyPair.REMOTE_CLASSNAME));
@@ -81,13 +81,13 @@ public class Backend {
 	@SuppressWarnings("unused")
 	public void storeKeyPair(String md5, String secret) throws BackendException {
 		try {
-                        logger.log(Level.INFO, "Salvataggio nuovo keypair: [{0},{1}]", new Object[]{md5, secret});
+			logger.log(Level.INFO, "Salvataggio nuovo keypair: [{0},{1}]", new Object[]{md5, secret});
 			KeyPair keyPair = new KeyPair(md5, secret);
 			String json = ParsingUtils.streamToString(doParseStore("classes/" + KeyPair.REMOTE_CLASSNAME, keyPair));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 		} catch (JsonSyntaxException e) {
-                        logger.log(Level.INFO, "Risposta inattesa del backend");
+            logger.log(Level.INFO, "Risposta inattesa del backend");
 			throw new BackendException("Risposta inattesa dal backend", e);
 		} catch (Exception e) {
 			throw new BackendException(e);
@@ -95,14 +95,9 @@ public class Backend {
 	}
 	
 	@SuppressWarnings("unused")
-	public void trackDownload(RockitTrack track, Long bytes) throws BackendException {
+	public void trackActivity(Activity activity) throws BackendException {
 		try {
-			Download download = new Download();
-			download.setTitle(track.getTitle());
-			download.setArtist(track.getAuthor());
-			download.setUrl(track.getUrl());
-			download.setSize(bytes);
-			String json = ParsingUtils.streamToString(doParseStore("classes/" + Download.REMOTE_CLASSNAME, download));
+			String json = ParsingUtils.streamToString(doParseStore("classes/" + Activity.REMOTE_CLASSNAME, activity));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 		} catch (JsonSyntaxException e) {

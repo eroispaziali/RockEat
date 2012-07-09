@@ -1,6 +1,7 @@
 package it.rockeat;
 
 import it.rockeat.backend.Backend;
+import it.rockeat.backend.Activity;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
@@ -13,6 +14,7 @@ import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
 import it.rockeat.source.rockit.RockitSource;
 import it.rockeat.util.FileManagementUtils;
+import it.rockeat.util.HashUtils;
 import it.rockeat.util.Id3TaggingUtils;
 import it.rockeat.util.ParsingUtils;
 
@@ -34,17 +36,35 @@ public class SourceManager {
     private Long downloadedTracks = 0L;
     private Long bytesDownloaded = 0L;
     private MusicSource musicSource;
+    private HttpClient httpClient;
+    private SettingsManager settingsManager;
     private Backend backend;
-    HttpClient httpClient;
 
     public SourceManager() {
         httpClient = HttpUtils.createClient();
+        settingsManager = new SettingsManager(httpClient);
         backend = new Backend(httpClient);
     }
 
     public MusicSource findSource(String url) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-        musicSource = new RockitSource(url, httpClient, backend);        
+    	musicSource = new RockitSource(url, httpClient, settingsManager);        
         return musicSource;
+    }
+    
+    private void trackActivity(RockitAlbum album) {
+    	Activity activity = new Activity();
+    	activity.setAlbum(album.getTitle());
+    	activity.setArtist(album.getArtist());
+    	activity.setTracksDownloaded(0L);
+    	activity.setBytesDownloaded(0L);
+    	activity.setUrl(album.getUrl());  
+    	activity.setOrigin(HashUtils.getMacAddress());
+    	try {
+			backend.trackActivity(activity);
+		} catch (BackendException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     @SuppressWarnings("unused")
@@ -57,6 +77,7 @@ public class SourceManager {
         HttpClient httpClient = HttpUtils.createClient();
         RockitAlbum album = musicSource.parse(htmlCode);
         album.setUrl(url);
+        trackActivity(album);
         return album;
     }
 
@@ -73,9 +94,7 @@ public class SourceManager {
                 FileUtils.deleteQuietly(fileOnDisk);
                 throw new DownloadException();
             } else {
-                /*
-                 * il download sta funzionando
-                 */
+                /* il download sta funzionando */
                 bytesDownloaded += FileUtils.sizeOf(fileOnDisk);
                 downloadedTracks++;
                 musicSource.noticeDownloadSuccess();
@@ -110,4 +129,44 @@ public class SourceManager {
     public Long getBytesDownloaded() {
         return bytesDownloaded;
     }
+
+	public MusicSource getMusicSource() {
+		return musicSource;
+	}
+
+	public void setMusicSource(MusicSource musicSource) {
+		this.musicSource = musicSource;
+	}
+
+	public HttpClient getHttpClient() {
+		return httpClient;
+	}
+
+	public void setHttpClient(HttpClient httpClient) {
+		this.httpClient = httpClient;
+	}
+
+	public SettingsManager getSettingsManager() {
+		return settingsManager;
+	}
+
+	public void setSettingsManager(SettingsManager settingsManager) {
+		this.settingsManager = settingsManager;
+	}
+
+	public Backend getBackend() {
+		return backend;
+	}
+
+	public void setBackend(Backend backend) {
+		this.backend = backend;
+	}
+
+	public void setDownloadedTracks(Long downloadedTracks) {
+		this.downloadedTracks = downloadedTracks;
+	}
+
+	public void setBytesDownloaded(Long bytesDownloaded) {
+		this.bytesDownloaded = bytesDownloaded;
+	}
 }

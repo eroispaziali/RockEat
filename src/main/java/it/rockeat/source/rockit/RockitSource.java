@@ -1,6 +1,6 @@
 package it.rockeat.source.rockit;
 
-import it.rockeat.backend.Backend;
+import it.rockeat.SettingsManager;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -59,33 +58,30 @@ public class RockitSource implements MusicSource {
     public static final String TOKEN_PARAM = "rockitID";
     public static final String PLAYER_SOURCE_FILE = "rockitPlayer.as";
     public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
-    public static final String TEMP_FOLDER = "RockEat-tmp/";
+    public static final String TEMP_FOLDER = "rockeat-tmp/";
     
-    private Map<String, String> keyPairs = new HashMap<String, String>();
     private String url;
     private Document page;
     private String playerMd5;
     private String secret;
     private HttpClient httpClient;
-    private Backend backend;        
+    private SettingsManager settingsManager;
     
     private final static Logger logger = Logger.getLogger(RockitSource.class .getName()); 
 
-    public RockitSource(String url, HttpClient httpClient, Backend backend) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-        this.url = url;
+    public RockitSource(String url, HttpClient httpClient, SettingsManager settingsManager) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+    	this.settingsManager = settingsManager;
+    	this.url = url;
         this.httpClient = httpClient;
         this.page = fetchDocument();
-        this.backend = backend;
-        this.keyPairs = backend.retrieveKnownKeyPairs();
         analyzePlayer();
     }
 
-    public RockitSource(String url, HttpClient httpClient, Backend backend, String secret) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-        this.url = url;
+    public RockitSource(String url, HttpClient httpClient, SettingsManager settingsManager, String secret) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+    	this.settingsManager = settingsManager;
+    	this.url = url;
         this.httpClient = httpClient;
         this.page = fetchDocument();
-        this.backend = backend;
-        this.keyPairs = backend.retrieveKnownKeyPairs();
         analyzePlayer();
     }
 
@@ -170,9 +166,7 @@ public class RockitSource implements MusicSource {
             logger.log(Level.INFO, "Trovato un elemento: {0}", album.toString());
             return album;
         } else {
-            /*
-             * Nothing found
-             */
+            /* Nothing found */
            logger.log(Level.INFO, "Nessun elemento trovato");
             throw new ParsingException();
         }
@@ -197,6 +191,7 @@ public class RockitSource implements MusicSource {
 
     @Override
     public boolean runTest() {
+    	Map<String, String> keyPairs = settingsManager.getSettings().getKeypairs();
         return (keyPairs.containsKey(playerMd5)) ? true : false;
     }
 
@@ -213,11 +208,12 @@ public class RockitSource implements MusicSource {
     }
     
     private boolean isPlayerKnown(String playerMd5) {
+    	Map<String, String> keyPairs = settingsManager.getSettings().getKeypairs();
     	return BooleanUtils.isTrue(keyPairs.containsKey(playerMd5));
     }
 
     private void analyzePlayer() throws ConnectionException, ParsingException, MalformedURLException {
-    	String tmpFilename = "player.swf";
+    	String tmpFilename = "rockeat.tmp";
     	logger.log(Level.INFO, "Analisi player in corso");
         URL parsedUrl = new URL(url);
         Element playerEl = page.select("div.player embed[type=application/x-shockwave-flash]").first();
@@ -231,7 +227,7 @@ public class RockitSource implements MusicSource {
 				playerMd5 = (HashUtils.md5(new FileInputStream(tmpFilename)));
 				if (!isPlayerKnown(playerMd5)) {
 					secret = findSecretKey(tmpFilename);
-					saveNewKey(playerMd5, secret);
+					settingsManager.addNewKnownPlayer(playerMd5, secret);
 				}
 				FileUtils.deleteQuietly(new File(tmpFilename));
 			} catch (Exception e) {
@@ -262,21 +258,9 @@ public class RockitSource implements MusicSource {
     	}
     }
     
-    private void saveNewKey(String playerMd5, String secret) {
-    	 try {                
-             backend.storeKeyPair(playerMd5, secret);
-             keyPairs.put(playerMd5, secret);
-         } catch (BackendException e) {
-             /*
-              * non sono riuscito a salvare il keypair, ignoro
-              * silenziosamente
-              */
-         }
-    }
-
     public void noticeDownloadSuccess() {
         if (!isPlayerKnown(playerMd5)) {
-           saveNewKey(playerMd5, secret);
+        	settingsManager.addNewKnownPlayer(playerMd5, secret);
         }
     }
 
