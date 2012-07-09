@@ -1,6 +1,6 @@
 package it.rockeat.ui;
 
-import it.rockeat.Controller;
+import it.rockeat.SourceManager;
 
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -31,7 +31,7 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
 	protected JProgressBar progressBar;
 	protected JButton startButton;
 	protected GridBagConstraints c;
-	protected Controller controller = new Controller();
+	protected SourceManager controller = new SourceManager();
 
 	protected void uiReset() {
         startButton.setEnabled(true);
@@ -97,9 +97,9 @@ public class RockEatGui extends JPanel implements ActionListener, PropertyChange
         
         
         try {
-			ParseTask parseTask = new ParseTask(this, url);
-			parseTask.addPropertyChangeListener(this);
-			parseTask.execute();
+//			ParseTask parseTask = new ParseTask(this, url);
+//			parseTask.addPropertyChangeListener(this);
+//			parseTask.execute();
 		} catch (IllegalArgumentException e) {
 			JOptionPane.showMessageDialog(this, Messages.ERROR_URL, Messages.TITLE, 1);
 			uiReset();

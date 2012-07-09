@@ -1,7 +1,8 @@
 package it.rockeat;
 
 import it.rockeat.ui.RockEatCli;
-import it.rockeat.ui.RockEatGui;
+import it.rockeat.ui.RockEatUI;
+import javax.swing.JFrame;
 
 public class RockEat {
 	
@@ -9,7 +10,15 @@ public class RockEat {
 		if (args.length > 0) {
 			RockEatCli.main(args);
 		} else {
-			RockEatGui.main(args);	
+//                    try {           
+//                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//                    } catch (Exception e) {
+//                        /* silently ignore */
+//                    }
+                    JFrame frame = new RockEatUI();
+                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    frame.pack();
+                    frame.setVisible(true);	
 		}
 	}
 

@@ -1,10 +1,10 @@
 package it.rockeat.ui;
 
-import it.rockeat.Controller;
-import it.rockeat.bean.Album;
-import it.rockeat.bean.Track;
-import it.rockeat.eater.Eater;
-import it.rockeat.eater.RockitEater;
+import it.rockeat.SourceManager;
+import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.RockitTrack;
+import it.rockeat.source.MusicSource;
+import it.rockeat.source.rockit.RockitSource;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
@@ -96,12 +96,12 @@ public class RockEatCli {
 		    try {
 		    	CommandLineParser parser = new GnuParser();
 		        CommandLine commandLine = parser.parse(options,args);
-				Controller controller = new Controller();
+				SourceManager controller = new SourceManager();
 				controller.setId3TaggingEnabled(!commandLine.hasOption(DISABLE_TAGGING));
 				if (commandLine.hasOption(URL)) {
 					if (commandLine.hasOption(URL)) {
 						String url = commandLine.getOptionValue(URL);
-						Eater eater = controller.findEater(url);
+						MusicSource eater = controller.findSource(url);
 						
 						if (commandLine.hasOption(CRAWLING)) {
 							out.println(Messages.PARSE_IN_PROGRESS);
@@ -113,8 +113,8 @@ public class RockEatCli {
 						} else {
 								
 							if (commandLine.hasOption(SECRET)) {
-								if (eater instanceof RockitEater) {
-									((RockitEater)eater).setSecret(commandLine.getOptionValue(SECRET));
+								if (eater instanceof RockitSource) {
+									((RockitSource)eater).setSecret(commandLine.getOptionValue(SECRET));
 								}
 							}
 							
@@ -129,13 +129,13 @@ public class RockEatCli {
 								}
 							} else {
 								out.println(Messages.PARSE_IN_PROGRESS);
-								Album album = controller.parse(url);
+								RockitAlbum album = controller.parse(url);
 								out.println(FormatUtils.formatAlbumData(album));
 								
 								if (commandLine.hasOption(EAT)) {
 									Integer progress = 0;
 									Integer count = album.getTracksCount();
-									for (Track track : album.getTracks()) {
+									for (RockitTrack track : album.getTracks()) {
 										progress++;
 										String st = StringUtils.leftPad(">", progress+1, "=") + StringUtils.leftPad("", count-progress, " ");
 										out.print("Download: [" + st + "] "+Long.toString(controller.getDownloadedTracks()+1) + "/" + Integer.toString(count));

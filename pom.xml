@@ -63,6 +63,10 @@
             <artifactId>mp3agic</artifactId>
             <version>0.6</version>
         </dependency>
-            
+        <dependency>
+            <groupId>com.jpexs</groupId>
+            <artifactId>asdec</artifactId>
+            <version>beta1</version>
+        </dependency>
     </dependencies>
 </project>

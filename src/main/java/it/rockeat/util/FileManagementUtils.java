@@ -1,7 +1,7 @@
 package it.rockeat.util;
 
-import it.rockeat.bean.Album;
-import it.rockeat.bean.Track;
+import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.RockitTrack;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class FileManagementUtils {
 		return filename;
 	}
 	
-	public static String createFolder(Album album) {
+	public static String createFolder(RockitAlbum album) {
 		try {
 			String folderPath = StringUtils.EMPTY;
 			if (StringUtils.isNotBlank(album.getArtist()) && StringUtils.isNotBlank(album.getTitle())) {
@@ -38,7 +38,7 @@ public class FileManagementUtils {
 		}
 	}
 	
-	public static String createFilename(Album album, Track track) {
+	public static String createFilename(RockitAlbum album, RockitTrack track) {
 		String songTitle = StringUtils.trim(track.getTitle());
 		Integer howManyDigits = StringUtils.length(Integer.toString(CollectionUtils.size(album.getTracks())));
 		String filename =

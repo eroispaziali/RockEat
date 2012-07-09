@@ -1,9 +1,9 @@
 package it.rockeat;
 
 import it.rockeat.backend.Backend;
-import it.rockeat.bean.Album;
-import it.rockeat.eater.Eater;
-import it.rockeat.eater.RockitEater;
+import it.rockeat.model.RockitAlbum;
+import it.rockeat.source.MusicSource;
+import it.rockeat.source.rockit.RockitSource;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.http.HttpUtils;
 
@@ -27,7 +27,7 @@ public class RockCrawler extends WebCrawler {
     
     private final static Pattern URL_AVOID = Pattern.compile(".*/(canzone|user|news|web|compilation)/.*");
     
-    private Map<String, Album> albums = new HashMap<String, Album>();
+    private Map<String, RockitAlbum> albums = new HashMap<String, RockitAlbum>();
 	 
 	@Override
     public boolean shouldVisit(WebURL url) {
@@ -45,8 +45,8 @@ public class RockCrawler extends WebCrawler {
 		HttpClient client = HttpUtils.createClient();
 		
 		try {
-			Eater eater = new RockitEater(url, client, new Backend(client));
-			Album album = eater.parse(url);
+			MusicSource eater = new RockitSource(url, client, new Backend(client));
+			RockitAlbum album = eater.parse(url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(url + ": " + album);
