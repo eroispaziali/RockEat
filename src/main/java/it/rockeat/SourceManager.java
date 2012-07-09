@@ -1,18 +1,29 @@
 package it.rockeat;
 
 import it.rockeat.backend.Backend;
+import it.rockeat.exception.BackendException;
+import it.rockeat.exception.ConnectionException;
+import it.rockeat.exception.DownloadException;
+import it.rockeat.exception.FileSaveException;
+import it.rockeat.exception.Id3TaggingException;
+import it.rockeat.exception.ParsingException;
+import it.rockeat.http.HttpUtils;
 import it.rockeat.model.RockitAlbum;
 import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
 import it.rockeat.source.rockit.RockitSource;
-import it.rockeat.exception.*;
-import it.rockeat.http.HttpUtils;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
 import it.rockeat.util.ParsingUtils;
-import java.io.*;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.client.HttpClient;
@@ -38,7 +49,6 @@ public class SourceManager {
 
     @SuppressWarnings("unused")
     public RockitAlbum parse(String url) throws BackendException, MalformedURLException, ConnectionException, ParsingException {
-        System.out.println("Parsing " + url);
         url = ParsingUtils.addProtocolPrefixIfMissing(url);
         URL parsedUrl = new URL(url);
         MusicSource musicSource = findSource(url);

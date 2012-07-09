@@ -1,18 +1,23 @@
 package it.rockeat.source.rockit;
 
-import it.rockeat.model.RockitAlbum;
-import it.rockeat.model.RockitTrack;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import it.rockeat.backend.Backend;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.http.HttpUtils;
+import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
+import it.rockeat.util.ActionScriptUtils;
+import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.HashUtils;
 import it.rockeat.util.ParsingUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,7 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -39,13 +48,19 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
 public class RockitSource implements MusicSource {
 
     public static final String TRACK_LOOKUP_URL = "http://www.rockit.it/web/include/ajax.play.php";
     public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
     public static final String PARSING_TITLE_ARTIST_SEPARATOR = " - ";
     public static final String TOKEN_PARAM = "rockitID";
+    public static final String PLAYER_SOURCE_FILE = "rockitPlayer.as";
     public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
+    public static final String TEMP_FOLDER = "RockEat-tmp/";
+    
     private Map<String, String> keyPairs = new HashMap<String, String>();
     private String url;
     private Document page;
@@ -60,19 +75,18 @@ public class RockitSource implements MusicSource {
         this.url = url;
         this.httpClient = httpClient;
         this.page = fetchDocument();
-        this.playerMd5 = analyzePlayer();
         this.backend = backend;
         this.keyPairs = backend.retrieveKnownKeyPairs();
-        this.secret = keyPairs.get(playerMd5);
+        analyzePlayer();
     }
 
     public RockitSource(String url, HttpClient httpClient, Backend backend, String secret) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
         this.url = url;
         this.httpClient = httpClient;
-        this.playerMd5 = analyzePlayer();
+        this.page = fetchDocument();
         this.backend = backend;
         this.keyPairs = backend.retrieveKnownKeyPairs();
-        this.secret = secret;
+        analyzePlayer();
     }
 
     private static RockitTrack cleanup(RockitTrack track) {
@@ -109,7 +123,6 @@ public class RockitSource implements MusicSource {
 
     @Override
     public RockitAlbum parse(String htmlCode) throws ParsingException {
-        logger.info("Parsing... ");
         RockitAlbum album = new RockitAlbum();
         String albumTitle;
         String albumArtist;
@@ -198,35 +211,72 @@ public class RockitSource implements MusicSource {
             throw new ConnectionException(e);
         }
     }
+    
+    private boolean isPlayerKnown(String playerMd5) {
+    	return BooleanUtils.isTrue(keyPairs.containsKey(playerMd5));
+    }
 
-    private String analyzePlayer() throws ConnectionException, ParsingException, MalformedURLException {
-        System.out.println("Analisi player in corso...");
+    private void analyzePlayer() throws ConnectionException, ParsingException, MalformedURLException {
+    	String tmpFilename = "player.swf";
+    	logger.log(Level.INFO, "Analisi player in corso");
         URL parsedUrl = new URL(url);
         Element playerEl = page.select("div.player embed[type=application/x-shockwave-flash]").first();
         String playerUrl;
         if (playerEl != null && playerEl.hasAttr("src")) {
             playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + playerEl.attr("src");
-            InputStream playerSwf = HttpUtils.httpGet(playerUrl);
-            String hash = HashUtils.md5(playerSwf);
-            System.out.println("Hash player: " + hash);
-            return hash;
+            InputStream playerData = HttpUtils.httpGet(playerUrl);
+			try {
+				OutputStream tmpFile = new FileOutputStream(tmpFilename);
+				IOUtils.copy(playerData,tmpFile); 
+				playerMd5 = (HashUtils.md5(new FileInputStream(tmpFilename)));
+				if (!isPlayerKnown(playerMd5)) {
+					secret = findSecretKey(tmpFilename);
+					saveNewKey(playerMd5, secret);
+				}
+				FileUtils.deleteQuietly(new File(tmpFilename));
+			} catch (Exception e) {
+				/* Non riesco a leggere il secret dal sorgente */
+			}
         } else {
             System.out.println("Player non trovato nella pagina");
             throw new ParsingException("Player non trovato nella pagina");
         }
     }
+    
+    private static String findSecretKey(String swfFile) {
+    	try {
+	    	ActionScriptUtils.decompileSwf(swfFile, TEMP_FOLDER);
+			String source = FileManagementUtils.findFile(TEMP_FOLDER, PLAYER_SOURCE_FILE);
+			String line = FileManagementUtils.searchLine(source, TOKEN_PARAM);
+			String secret = StringUtils.substringBetween(line, "\"");
+			FileUtils.deleteQuietly(new File(TEMP_FOLDER)); 	
+			return secret;
+    	} catch (FileNotFoundException e) {
+    		/* SWF not found */
+    		FileUtils.deleteQuietly(new File(TEMP_FOLDER)); 	
+    		return null;
+    	} catch (IOException e) {
+    		/* Error while reading SWF */
+    		FileUtils.deleteQuietly(new File(TEMP_FOLDER)); 	
+    		return null;
+    	}
+    }
+    
+    private void saveNewKey(String playerMd5, String secret) {
+    	 try {                
+             backend.storeKeyPair(playerMd5, secret);
+             keyPairs.put(playerMd5, secret);
+         } catch (BackendException e) {
+             /*
+              * non sono riuscito a salvare il keypair, ignoro
+              * silenziosamente
+              */
+         }
+    }
 
     public void noticeDownloadSuccess() {
-        if (!keyPairs.containsKey(playerMd5)) {
-            try {                
-                backend.storeKeyPair(playerMd5, secret);
-                keyPairs.put(playerMd5, secret);
-            } catch (BackendException e) {
-                /*
-                 * non sono riuscito a salvare il keypair, ignoro
-                 * silenziosamente
-                 */
-            }
+        if (!isPlayerKnown(playerMd5)) {
+           saveNewKey(playerMd5, secret);
         }
     }
 

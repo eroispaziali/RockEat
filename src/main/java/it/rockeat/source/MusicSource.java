@@ -4,6 +4,7 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.model.RockitAlbum;
 import it.rockeat.model.RockitTrack;
+
 import java.io.OutputStream;
 
 public interface MusicSource {

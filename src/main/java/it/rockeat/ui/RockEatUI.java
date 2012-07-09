@@ -6,16 +6,15 @@ package it.rockeat.ui;
 
 import it.rockeat.SourceManager;
 import it.rockeat.model.RockitAlbum;
-import it.rockeat.ui.DownloadTask;
-import it.rockeat.ui.Messages;
-import it.rockeat.ui.ParseTask;
 import it.rockeat.util.ParsingUtils;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
+
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.event.DocumentEvent;

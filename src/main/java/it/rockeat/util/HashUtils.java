@@ -2,6 +2,8 @@ package it.rockeat.util;
 
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.security.MessageDigest;
 
 public class HashUtils {
@@ -43,6 +45,22 @@ public class HashUtils {
 			BigInteger bigInt = new BigInteger(1, md5sum);
 			String output = bigInt.toString(16);
 			return output;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public static String getMacAddress() {
+		InetAddress ip;
+		try {
+			ip = InetAddress.getLocalHost();
+			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+			byte[] mac = network.getHardwareAddress();
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < mac.length; i++) {
+				sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "" : ""));		
+			}
+			return sb.toString();
 		} catch (Exception e) {
 			return null;
 		}

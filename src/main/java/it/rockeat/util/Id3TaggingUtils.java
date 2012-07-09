@@ -1,8 +1,8 @@
 package it.rockeat.util;
 
+import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.model.RockitAlbum;
 import it.rockeat.model.RockitTrack;
-import it.rockeat.exception.Id3TaggingException;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,11 +1,11 @@
 package it.rockeat;
 
 import it.rockeat.backend.Backend;
+import it.rockeat.exception.ParsingException;
+import it.rockeat.http.HttpUtils;
 import it.rockeat.model.RockitAlbum;
 import it.rockeat.source.MusicSource;
 import it.rockeat.source.rockit.RockitSource;
-import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpUtils;
 
 import java.util.HashMap;
 import java.util.Map;

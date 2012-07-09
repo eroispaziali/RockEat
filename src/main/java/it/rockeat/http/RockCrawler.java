@@ -1,8 +1,8 @@
 package it.rockeat.http;
 
 import it.rockeat.SourceManager;
-import it.rockeat.model.RockitAlbum;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.model.RockitAlbum;
 import it.rockeat.util.FormatUtils;
 
 import java.util.HashMap;

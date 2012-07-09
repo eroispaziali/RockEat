@@ -1,18 +1,18 @@
 package it.rockeat.ui;
 
-import it.rockeat.model.RockitAlbum;
-import it.rockeat.model.RockitTrack;
-import it.rockeat.source.MusicSource;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.exception.UnknownPlayerException;
+import it.rockeat.model.RockitAlbum;
+import it.rockeat.source.MusicSource;
+
 import java.awt.image.ImageObserver;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
+
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+
 import org.apache.commons.lang3.BooleanUtils;
 
 public class ParseTask extends SwingWorker<Void, Void> {

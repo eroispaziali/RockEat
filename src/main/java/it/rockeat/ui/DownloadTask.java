@@ -1,9 +1,9 @@
 package it.rockeat.ui;
 
-import it.rockeat.model.RockitAlbum;
-import it.rockeat.model.RockitTrack;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
+import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.RockitTrack;
 
 import java.awt.image.ImageObserver;
 

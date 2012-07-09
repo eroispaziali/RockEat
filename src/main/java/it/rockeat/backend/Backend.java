@@ -1,13 +1,15 @@
 package it.rockeat.backend;
 
-import it.rockeat.model.RockitTrack;
 import it.rockeat.exception.BackendException;
+import it.rockeat.model.RockitTrack;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -18,8 +20,6 @@ import org.apache.http.entity.StringEntity;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Backend {
 	
@@ -60,7 +60,7 @@ public class Backend {
 	
 	public Map<String,String> retrieveKnownKeyPairs() throws BackendException {
 		try {
-                        logger.log(Level.INFO, "Interrogazione backend");
+            logger.log(Level.INFO, "Interrogazione backend");
 			String json = ParsingUtils.streamToString(doParseGet("classes/" + KeyPair.REMOTE_CLASSNAME));
 			Gson gson = new Gson();
 			KeyPairHolder holder = gson.fromJson(json, KeyPairHolder.class);
@@ -69,7 +69,7 @@ public class Backend {
 			for (int i=0;i<results.length;i++) {
 				secretMap.put(results[i].getMd5(), results[i].getSecret());
 			}
-                        logger.log(Level.INFO, "{0} keypair trovati",  new Object[]{results.length});
+            logger.log(Level.INFO, "{0} keypair trovati",  new Object[]{results.length});
 			return secretMap;
 		} catch (JsonSyntaxException e) {
 			throw new BackendException("Risposta inattesa dal backend", e);
