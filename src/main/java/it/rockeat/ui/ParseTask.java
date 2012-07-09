@@ -32,11 +32,11 @@ public class ParseTask extends SwingWorker<Void, Void> {
         jRockEatUI.getProgressBar().setString(Messages.PARSE_IN_PROGRESS);
         jRockEatUI.getProgressBar().setStringPainted(true);
         try {
-            MusicSource eater = jRockEatUI.getController().findSource(url);
+            MusicSource eater = jRockEatUI.getSourceManager().findSource(url);
             if (BooleanUtils.isFalse(eater.runTest())) {
                 throw new UnknownPlayerException();
             }
-            album = jRockEatUI.getController().parse(url);            
+            album = jRockEatUI.getSourceManager().parse(url);            
 //            album = new Album();
 //            album.setTitle("Album di prova");
 //            album.setArtist("Artista");
