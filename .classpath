@@ -28,5 +28,10 @@
 	<classpathentry kind="lib" path="lib/tagsoup-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/tika-core-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/tika-parsers-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/ant.jar"/>
+	<classpathentry kind="lib" path="lib/asdec-beta1.jar"/>
+	<classpathentry kind="lib" path="lib/castor-1.3.3-RC1-core.jar"/>
+	<classpathentry kind="lib" path="lib/castor-1.3.3-RC1-xml.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

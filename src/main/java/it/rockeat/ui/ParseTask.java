@@ -19,24 +19,24 @@ public class ParseTask extends SwingWorker<Void, Void> {
 
     private RockitAlbum album;
     private String url;
-    private RockEatUI jRockEatUI;
+    private RockEatUI rockEatUI;
 
     public ParseTask(RockEatUI ui, String url) {
-        this.jRockEatUI = ui;
+        this.rockEatUI = ui;
         this.url = url;
     }
 
     @Override
     public Void doInBackground() {
-        jRockEatUI.getProgressBar().setIndeterminate(true);
-        jRockEatUI.getProgressBar().setString(Messages.PARSE_IN_PROGRESS);
-        jRockEatUI.getProgressBar().setStringPainted(true);
+        rockEatUI.getProgressBar().setIndeterminate(true);
+        rockEatUI.getProgressBar().setString(Messages.PARSE_IN_PROGRESS);
+        rockEatUI.getProgressBar().setStringPainted(true);
         try {
-            MusicSource eater = jRockEatUI.getSourceManager().findSource(url);
+            MusicSource eater = rockEatUI.getSourceManager().findSource(url);
             if (BooleanUtils.isFalse(eater.runTest())) {
                 throw new UnknownPlayerException();
             }
-            album = jRockEatUI.getSourceManager().parse(url);            
+            album = rockEatUI.getSourceManager().parse(url);            
 //            album = new Album();
 //            album.setTitle("Album di prova");
 //            album.setArtist("Artista");
@@ -48,19 +48,24 @@ public class ParseTask extends SwingWorker<Void, Void> {
 //            album.setTracks(tracks);
 
         } catch (ConnectionException e) {
-            JOptionPane.showMessageDialog(jRockEatUI, Messages.ERROR_CONNECTION, Messages.TITLE, 0);
+        	rockEatUI.reset();
+            JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_CONNECTION, Messages.TITLE, 0);
             setProgress(ImageObserver.ERROR);
         } catch (ParsingException e) {
-            JOptionPane.showMessageDialog(jRockEatUI, Messages.NOTHING_FOUND, Messages.TITLE, 1);
+        	rockEatUI.reset();
+            JOptionPane.showMessageDialog(rockEatUI, Messages.NOTHING_FOUND, Messages.TITLE, 1);
             setProgress(ImageObserver.ERROR);
         } catch (MalformedURLException e) {
-            JOptionPane.showMessageDialog(jRockEatUI, Messages.ERROR_URL, Messages.TITLE, 1);
+        	rockEatUI.reset();
+            JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_URL, Messages.TITLE, 1);
             setProgress(ImageObserver.ERROR);
         } catch (UnknownPlayerException e) {
-            JOptionPane.showMessageDialog(jRockEatUI, Messages.ERROR_PLAYER, Messages.TITLE, 0);
+        	rockEatUI.reset();
+            JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_PLAYER, Messages.TITLE, 0);
             setProgress(ImageObserver.ERROR);
         } catch (BackendException e) {
-            JOptionPane.showMessageDialog(jRockEatUI, Messages.ERROR_BACKEND, Messages.TITLE, 0);
+        	rockEatUI.reset();
+            JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_BACKEND, Messages.TITLE, 0);
             setProgress(ImageObserver.ERROR);
         }
         return null;
@@ -69,7 +74,7 @@ public class ParseTask extends SwingWorker<Void, Void> {
     @Override
     public void done() {
         if (album != null) {
-            jRockEatUI.startDownload(album);
+            rockEatUI.startDownload(album);
         }
 
 

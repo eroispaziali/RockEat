@@ -40,11 +40,14 @@ public class DownloadTask extends SwingWorker<Void, Void> {
             } catch (FileSaveException e) {
                 JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_FILEWRITE, Messages.TITLE, 0);
                 setProgress(ImageObserver.ABORT);
+                rockEatUI.reset();
             } catch (DownloadException e) {
                 JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_PLAYER, Messages.TITLE, 0);
                 setProgress(ImageObserver.ABORT);
+                rockEatUI.reset();
             } catch (Exception e) {
                 setProgress(ImageObserver.ERROR);
+                rockEatUI.reset();
             }
         }
         if (rockEatUI.getSourceManager().getDownloadedTracks() > 0) {

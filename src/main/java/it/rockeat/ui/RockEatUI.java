@@ -8,6 +8,8 @@ import it.rockeat.SourceManager;
 import it.rockeat.model.RockitAlbum;
 import it.rockeat.util.ParsingUtils;
 
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -31,6 +33,14 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     private ParseTask parseTask;
     private DownloadTask downloadTask;
 
+    public void reset() {
+		buttonParse.setEnabled(true);
+		urlField.setEnabled(true);
+		progressBar.setIndeterminate(false);
+		progressBar.setString("");
+		progressBar.setStringPainted(true);
+    }
+    
     public void startParsing(String url) {
         try {
             buttonParse.setEnabled(false);
@@ -40,8 +50,10 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
             parseTask.execute();
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(this, Messages.ERROR_URL, Messages.TITLE, 1);
+            reset();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, Messages.ERROR_UNEXPECTED, Messages.TITLE, 0);
+            reset();
         }
     }
     
@@ -49,7 +61,7 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
 //        String s = (String)JOptionPane.showInputDialog(
 //            this,
 //            "Conosci la nuova parola segreta?",
-//            "RockEat non è in grado di scaricare questo elemento",
+//            "RockEat non Ã¨ in grado di scaricare questo elemento",
 //            JOptionPane.PLAIN_MESSAGE);
 //    }
 
@@ -74,6 +86,10 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     }
 
     public RockEatUI() {
+    	URL iconUrl = ClassLoader.getSystemResource("it/rockeat/rockeat.png");
+    	Toolkit kit = Toolkit.getDefaultToolkit();
+    	Image icon = kit.createImage(iconUrl);
+    	this.setIconImage(icon);
         sourceManager = new SourceManager();
         initComponents();
     }
