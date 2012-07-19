@@ -40,7 +40,7 @@ public class RockCrawler extends WebCrawler {
 		String url = page.getWebURL().getURL();
 		SourceManager controller = new SourceManager();
 		try {
-			RockitAlbum album = controller.parse(url);
+			RockitAlbum album = controller.findAlbum(url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(" " + album.getUrl());

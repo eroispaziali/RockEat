@@ -44,11 +44,11 @@ public class SourceManager {
         backend = new Backend(httpClient);
     }
 
-    public MusicSource findSource(String url) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+    public MusicSource tuneInSource(String url) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
     	if (musicSource==null) {
     		musicSource = new RockitSource(httpClient, settingsManager);
     	}
-    	musicSource.prepare(url);
+    	musicSource.tuneIn(url);
         return musicSource;
     }
     
@@ -68,17 +68,22 @@ public class SourceManager {
     }
 
     @SuppressWarnings("unused")
-    public RockitAlbum parse(String url) throws BackendException, MalformedURLException, ConnectionException, ParsingException {
+    public RockitAlbum findAlbum(String url) throws BackendException, MalformedURLException, ConnectionException, ParsingException {
+    	/* reset counters */
+    	downloadedTracks = 0L;
+        bytesDownloaded = 0L;
+
+        /* parse */
         url = ParsingUtils.addProtocolPrefixIfMissing(url);
         URL parsedUrl = new URL(url);
-        MusicSource musicSource = findSource(url);
-        RockitAlbum album = musicSource.parse();
+        MusicSource musicSource = tuneInSource(url);
+        RockitAlbum album = musicSource.findAlbum();
         album.setUrl(url);
         return album;
     }
 
     public void download(RockitAlbum album, RockitTrack track) throws BackendException, ConnectionException, DownloadException, FileSaveException, MalformedURLException, ParsingException {
-        MusicSource musicSource = findSource(album.getUrl());
+        MusicSource musicSource = tuneInSource(album.getUrl());
         String folderName = FileManagementUtils.createFolder(album);
         String filePath = folderName + FileManagementUtils.createFilename(album, track);
         try {

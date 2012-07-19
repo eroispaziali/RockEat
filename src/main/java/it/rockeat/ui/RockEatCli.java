@@ -11,7 +11,6 @@ import it.rockeat.http.RockCrawler;
 import it.rockeat.model.RockitAlbum;
 import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
-import it.rockeat.source.rockit.RockitSource;
 import it.rockeat.util.FormatUtils;
 
 import java.io.PrintStream;
@@ -42,7 +41,6 @@ public class RockEatCli {
 		private static final String CRAWLING = "x";
 		private static final String EAT = "e";
 		private static final String TESTING = "c";
-		private static final String SECRET = "s";
 		private static PrintStream out;
 		
 		public RockEatCli() {
@@ -87,7 +85,6 @@ public class RockEatCli {
 			
 			Options options = new Options();
 			options.addOption(new Option(URL, "url", true, "specifica l'indirizzo della pagina da analizzare"));
-			options.addOption(new Option(SECRET, "secret", true, "specifica un secret da utilizzare"));
 			options.addOption(new Option(DISABLE_TAGGING, "disable-tagging", false, "disabilita la scrittura automatica dei tag ID3"));
 			options.addOption(new Option(EAT, "eat", false, "mangia tutte le tracce disponibili"));
 			options.addOption(new Option(CRAWLING, "explore", false, "esplora le pagine vicine (funzionalità sperimentale)"));
@@ -101,7 +98,7 @@ public class RockEatCli {
 				if (commandLine.hasOption(URL)) {
 					if (commandLine.hasOption(URL)) {
 						String url = commandLine.getOptionValue(URL);
-						MusicSource eater = controller.findSource(url);
+						MusicSource eater = controller.tuneInSource(url);
 						
 						if (commandLine.hasOption(CRAWLING)) {
 							out.println(Messages.PARSE_IN_PROGRESS);
@@ -112,12 +109,6 @@ public class RockEatCli {
 							}
 						} else {
 								
-							if (commandLine.hasOption(SECRET)) {
-								if (eater instanceof RockitSource) {
-									((RockitSource)eater).setSecret(commandLine.getOptionValue(SECRET));
-								}
-							}
-							
 							if (commandLine.hasOption(TESTING)) {
 								out.println(Messages.PARSE_IN_PROGRESS);
 								
@@ -129,7 +120,7 @@ public class RockEatCli {
 								}
 							} else {
 								out.println(Messages.PARSE_IN_PROGRESS);
-								RockitAlbum album = controller.parse(url);
+								RockitAlbum album = controller.findAlbum(url);
 								out.println(FormatUtils.formatAlbumData(album));
 								
 								if (commandLine.hasOption(EAT)) {

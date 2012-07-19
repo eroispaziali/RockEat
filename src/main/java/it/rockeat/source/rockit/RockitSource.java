@@ -57,41 +57,51 @@ public class RockitSource implements MusicSource {
     public static final String PLAYER_SOURCE_FILE = "rockitPlayer.as";
     public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
     public static final String TEMP_FILENAME = ".rockeat.tmp";
-    public static final String TEMP_FOLDER = "rockeat-tmp/";
+    public static final String TEMP_FOLDER = ".rockeat/";
     public static final String TOKEN_PARAM = "rockitID";
     
     private Document document;
     private HttpClient httpClient;
     private File player;
-    private String playerMd5; 
+    private String hash; 
     private String secret;
     private SettingsManager settingsManager;
     private String url;
     
     public static final String TRACK_LOOKUP_URL = "http://www.rockit.it/web/include/ajax.play.php";
+
+    public RockitSource(HttpClient httpClient, SettingsManager settingsManager) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
+    	this.settingsManager = settingsManager;
+        this.httpClient = httpClient;
+    }
+    
     private static RockitTrack cleanup(RockitTrack track) {
         String cleanedTitle = track.getTitle();
         track.setTitle(StringUtils.isNotBlank(cleanedTitle) ? StringUtils.trim(cleanedTitle.replaceAll(" +", " ")) : cleanedTitle);
         return track;
     }
     
-    private boolean isPlayerKnown(String playerMd5) {
+    private boolean isPlayerKnown(String md5) {
     	Map<String, String> keyPairs = settingsManager.getSettings().getKeypairs();
-    	return BooleanUtils.isTrue(keyPairs.containsKey(playerMd5));
+    	return BooleanUtils.isTrue(keyPairs.containsKey(md5));
     }
     
     private String findSecretKey(String md5) throws ParsingException {
     	try {
-    		return settingsManager.findKey(md5);
+    		String key = settingsManager.findKey(md5);
+    		FileUtils.deleteQuietly(player);
+    		return key;
     	} catch (Exception e) {
     		/* decompile */
 			try {
 		    	ActionScriptUtils.decompileSwf(player.getAbsolutePath(), TEMP_FOLDER);
 				String source = FileManagementUtils.findFile(TEMP_FOLDER, PLAYER_SOURCE_FILE);
 				String line = FileManagementUtils.searchLine(source, TOKEN_PARAM);
-				String secret = StringUtils.substringBetween(line, "\"");
-				settingsManager.addNewKnownPlayer(md5, secret);
-				return secret;
+				String key = StringUtils.substringBetween(line, "\"");
+				settingsManager.addNewKey(md5, key);
+				FileUtils.deleteQuietly(player);
+				FileUtils.deleteQuietly(new File(TEMP_FOLDER));
+				return key;
 	    	} catch (FileNotFoundException ex) {
 	    		/* SWF not found */
 	    		throw new ParsingException(ex);
@@ -100,10 +110,8 @@ public class RockitSource implements MusicSource {
 	    		throw new ParsingException(ex);
 	    	}
     	}
-    	
-    	
-    	
     }
+
     private static RockitTrack getTrackFromJson(InputStream jsonStream) {
         String json = ParsingUtils.streamToString(jsonStream);
         Gson gson = new Gson();
@@ -111,33 +119,32 @@ public class RockitSource implements MusicSource {
         return track;
     }
 
-    public RockitSource(HttpClient httpClient, SettingsManager settingsManager) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-    	this.settingsManager = settingsManager;
-        this.httpClient = httpClient;
-    }
-
-    public void prepare(String url) throws ConnectionException, MalformedURLException, ParsingException {
-    	this.url = url;
-        this.document = fetchDocument(url);
-        this.player = fetchPlayer();
-        this.playerMd5 = HashUtils.md5(player);
-		this.secret = findSecretKey(playerMd5);
+    public void tuneIn(String url) throws ConnectionException, MalformedURLException, ParsingException {
+    	if (!StringUtils.equals(url, this.url)) {
+	    	this.url = url;
+	        document = fetchDocument();
+	        player = fetchPlayer();
+	        hash = HashUtils.md5(player);
+			secret = findSecretKey(hash);
+    	}
     }
     
     public void finalize() {
+    	url = null;
+    	document = null;
+    	hash = null;
+    	secret = null;
     	FileUtils.deleteQuietly(player);
     }
 
     @Override
     public void download(RockitTrack track, OutputStream out) throws ConnectionException {
         try {
-        	Map<String, String> keyPairs = settingsManager.getSettings().getKeypairs();
-        	String secretInUse = keyPairs.get(playerMd5);
         	logger.log(Level.INFO, "Download di {0} in corso...", track.toString());
             HttpPost request = new HttpPost(track.getUrl());
             request.setHeader("Referer", REFERER_VALUE);
             List<NameValuePair> qparams = new ArrayList<NameValuePair>();
-            qparams.add(new BasicNameValuePair(TOKEN_PARAM, HashUtils.md5(track.getUrl() + secretInUse)));
+            qparams.add(new BasicNameValuePair(TOKEN_PARAM, HashUtils.md5(track.getUrl() + secret)));
             request.setEntity(new UrlEncodedFormEntity(qparams));
             HttpResponse response = httpClient.execute(request);
             HttpEntity responseEntity = response.getEntity();
@@ -147,7 +154,7 @@ public class RockitSource implements MusicSource {
         }
     }
 
-    private Document fetchDocument(String url) throws ConnectionException {
+    private Document fetchDocument() throws ConnectionException {
         try {
             HttpGet request = new HttpGet(url);
             HttpResponse response = httpClient.execute(request);
@@ -173,19 +180,12 @@ public class RockitSource implements MusicSource {
 				tmpFile.close();
 				return new File(TEMP_FILENAME);
 			} catch (IOException e) {
-				/* Non riesco a leggere il secret dal sorgente */
 				throw new ParsingException(e);
 			}
         } else {
         	logger.log(Level.WARNING, "Player non trovato nella pagina");
             throw new ParsingException("Player non trovato nella pagina");
         }
-    }
-
-
-
-    public String getSecret() {
-        return secret;
     }
 
     private RockitTrack lookupTrack(String id, String lookupUrl) throws ConnectionException, LookupException {
@@ -207,14 +207,15 @@ public class RockitSource implements MusicSource {
         }
     }
 
+    @Override
     public void noticeDownloadSuccess() {
-        if (!isPlayerKnown(playerMd5)) {
-        	settingsManager.addNewKnownPlayer(playerMd5, secret);
+        if (!isPlayerKnown(hash)) {
+        	settingsManager.addNewKey(hash, secret);
         }
     }
     
     @Override
-    public RockitAlbum parse() throws ParsingException {
+    public RockitAlbum findAlbum() throws ParsingException {
         RockitAlbum album = new RockitAlbum();
         String albumTitle;
         String albumArtist;
@@ -232,14 +233,8 @@ public class RockitSource implements MusicSource {
                         track.setOrder(trackNumber);
                         tracks.add(track);
                     } catch (ConnectionException e) {
-                        /*
-                         * Connection error on lookup
-                         */
                         throw new ParsingException(e);
                     } catch (LookupException e) {
-                        /*
-                         * Track lookup failure
-                         */
                         throw new ParsingException(e);
                     }
                 }
@@ -258,7 +253,8 @@ public class RockitSource implements MusicSource {
                 album.setArtist(albumArtist);
                 album.setTitle(albumTitle);
             }
-            album.setTracks(tracks);            
+            album.setTracks(tracks);
+            album.setUrl(url);
             logger.log(Level.INFO, "Trovato: {0}", album.toString());
             return album;
         } else {
@@ -270,13 +266,15 @@ public class RockitSource implements MusicSource {
     
     @Override
     public boolean runTest() {
-    	Map<String, String> keyPairs = settingsManager.getSettings().getKeypairs();
-        return (keyPairs.containsKey(playerMd5)) ? true : false;
+    	return isPlayerKnown(hash);
     }
 
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
+	public String getSecret() {
+		return secret;
+	}
 
-	
+	public void setSecret(String secret) {
+		this.secret = secret;
+	}
+
 }

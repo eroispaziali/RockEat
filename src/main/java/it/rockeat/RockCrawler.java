@@ -46,8 +46,8 @@ public class RockCrawler extends WebCrawler {
 		try {
 			SettingsManager settingsManager = new SettingsManager(client);
 			MusicSource musicSource = new RockitSource( client, settingsManager);
-			musicSource.prepare(url);
-			RockitAlbum album = musicSource.parse();
+			musicSource.tuneIn(url);
+			RockitAlbum album = musicSource.findAlbum();
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(url + ": " + album);

@@ -1,6 +1,7 @@
 package it.rockeat.backend;
 
 import it.rockeat.exception.BackendException;
+import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.IOException;
@@ -27,7 +28,7 @@ public class Backend {
 	private static final String CLIENT_KEY = "oztW8NntGlAkwgoIyMiVwrth1VBa6w8tpqFsNYNx";
 	private HttpClient httpClient;
         
-        private final static Logger logger = Logger.getLogger(Backend.class .getName()); 
+    private final static Logger logger = Logger.getLogger(Backend.class .getName()); 
 	
 	public Backend(HttpClient httpClient) {
 		this.httpClient = httpClient;
@@ -42,7 +43,7 @@ public class Backend {
 		HttpEntity responseEntity = response.getEntity();
 		return responseEntity.getContent();		
 	}
-	
+
 	private InputStream doParseStore(String entity, Object item) throws IllegalStateException, IOException {
 		HttpPost request = new HttpPost(ENDPOINT + entity);		
 		request.setHeader("Content-Type", "application/json");
@@ -57,12 +58,16 @@ public class Backend {
 		return responseEntity.getContent();		
 	}
 	
-	public String findKeypair(String md5) throws BackendException {
-		throw new BackendException("Not yet implemented");
+	public String findKeypair(String md5) throws BackendException, UnknownPlayerException {
+		Map<String,String> results = retrieveKeypairs();
+		if (results.containsKey(md5)) {
+			return results.get(md5);
+		} else {
+			throw new UnknownPlayerException();	
+		}
+		
 	}
 
-	
-	
 	public Map<String,String> retrieveKeypairs() throws BackendException {
 		try {
             logger.log(Level.INFO, "Interrogazione backend");
@@ -92,7 +97,7 @@ public class Backend {
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 			return response.getObjectId();
 		} catch (JsonSyntaxException e) {
-            logger.log(Level.INFO, "Risposta inattesa del backend");
+            logger.log(Level.SEVERE, "Risposta inattesa del backend");
 			throw new BackendException("Risposta inattesa dal backend", e);
 		} catch (Exception e) {
 			throw new BackendException(e);
@@ -106,6 +111,7 @@ public class Backend {
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 			return response.getObjectId();
 		} catch (JsonSyntaxException e) {
+			logger.log(Level.SEVERE, "Risposta inattesa del backend");
 			throw new BackendException("Risposta inattesa dal backend", e);
 		} catch (Exception e) {
 			throw new BackendException(e);

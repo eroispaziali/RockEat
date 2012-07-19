@@ -70,11 +70,14 @@ public class SettingsManager {
     	if (keyPairs.containsKey(md5)) {
     		return keyPairs.get(md5);
     	} else {
-    		return backend.findKeypair(md5);
+    		String key = backend.findKeypair(md5);
+    		keyPairs.put(md5, key);
+    		saveToFile();
+    		return key;
     	}
 	}
 	
-	public void addNewKnownPlayer(String md5, String key) {
+	public void addNewKey(String md5, String key) {
 		try {
 			Map<String, String> keyPairs = getSettings().getKeypairs();
 			backend.storeKeypair(md5, key);
