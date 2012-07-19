@@ -1,9 +1,10 @@
 package it.rockeat.util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.security.MessageDigest;
 
 public class HashUtils {
@@ -50,18 +51,10 @@ public class HashUtils {
 		}
 	}
 	
-	public static String getMacAddress() {
-		InetAddress ip;
+	public static String md5(File file) {
 		try {
-			ip = InetAddress.getLocalHost();
-			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-			byte[] mac = network.getHardwareAddress();
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < mac.length; i++) {
-				sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));		
-			}
-			return sb.toString();
-		} catch (Exception e) {
+			return (HashUtils.md5(new FileInputStream(file)));
+		} catch (FileNotFoundException e) {
 			return null;
 		}
 	}

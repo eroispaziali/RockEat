@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class Settings {
 	
+	private String uid;
 	private User user;
 	private Map<String,String> keypairs = new HashMap<String, String>();
 	
@@ -19,6 +20,12 @@ public class Settings {
 	}
 	public void setKeypairs(Map<String, String> keypairs) {
 		this.keypairs = keypairs;
+	}
+	public String getUid() {
+		return uid;
+	}
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 	
 	

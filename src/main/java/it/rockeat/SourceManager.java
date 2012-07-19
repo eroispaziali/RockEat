@@ -1,7 +1,7 @@
 package it.rockeat;
 
 import it.rockeat.backend.Backend;
-import it.rockeat.backend.Activity;
+import it.rockeat.backend.DownloadActivity;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
@@ -14,14 +14,12 @@ import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
 import it.rockeat.source.rockit.RockitSource;
 import it.rockeat.util.FileManagementUtils;
-import it.rockeat.util.HashUtils;
 import it.rockeat.util.Id3TaggingUtils;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -47,23 +45,25 @@ public class SourceManager {
     }
 
     public MusicSource findSource(String url) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-    	musicSource = new RockitSource(url, httpClient, settingsManager);        
+    	if (musicSource==null) {
+    		musicSource = new RockitSource(httpClient, settingsManager);
+    	}
+    	musicSource.prepare(url);
         return musicSource;
     }
     
-    private void trackActivity(RockitAlbum album) {
-    	Activity activity = new Activity();
-    	activity.setAlbum(album.getTitle());
-    	activity.setArtist(album.getArtist());
-    	activity.setTracksDownloaded(0L);
-    	activity.setBytesDownloaded(0L);
-    	activity.setUrl(album.getUrl());  
-    	activity.setOrigin(HashUtils.getMacAddress());
+    public void downloadFinished(RockitAlbum album) {
+    	DownloadActivity downloadActivity = new DownloadActivity();
+    	downloadActivity.setTitle(album.getTitle());
+    	downloadActivity.setArtist(album.getArtist());
+    	downloadActivity.setTracks(downloadedTracks);
+    	downloadActivity.setBytes(bytesDownloaded);
+    	downloadActivity.setUrl(album.getUrl());  
+    	downloadActivity.setUid(settingsManager.getSettings().getUid());
     	try {
-			backend.trackActivity(activity);
+			backend.log(downloadActivity);
 		} catch (BackendException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			/* silently ignore */
 		}
     }
 
@@ -72,12 +72,8 @@ public class SourceManager {
         url = ParsingUtils.addProtocolPrefixIfMissing(url);
         URL parsedUrl = new URL(url);
         MusicSource musicSource = findSource(url);
-        InputStream pageStream = HttpUtils.httpGet(url);
-        String htmlCode = ParsingUtils.streamToString(pageStream);
-        HttpClient httpClient = HttpUtils.createClient();
-        RockitAlbum album = musicSource.parse(htmlCode);
+        RockitAlbum album = musicSource.parse();
         album.setUrl(url);
-        trackActivity(album);
         return album;
     }
 

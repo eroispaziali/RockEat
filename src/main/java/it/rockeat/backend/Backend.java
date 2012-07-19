@@ -57,6 +57,12 @@ public class Backend {
 		return responseEntity.getContent();		
 	}
 	
+	public String findKeypair(String md5) throws BackendException {
+		throw new BackendException("Not yet implemented");
+	}
+
+	
+	
 	public Map<String,String> retrieveKeypairs() throws BackendException {
 		try {
             logger.log(Level.INFO, "Interrogazione backend");
@@ -93,9 +99,9 @@ public class Backend {
 		}
 	}
 	
-	public String trackActivity(Activity activity) throws BackendException {
+	public String log(DownloadActivity activity) throws BackendException {
 		try {
-			String json = ParsingUtils.streamToString(doParseStore("classes/" + Activity.REMOTE_CLASSNAME, activity));
+			String json = ParsingUtils.streamToString(doParseStore("classes/" + DownloadActivity.REMOTE_CLASSNAME, activity));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 			return response.getObjectId();

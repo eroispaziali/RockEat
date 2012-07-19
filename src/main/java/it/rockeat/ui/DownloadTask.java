@@ -51,6 +51,7 @@ public class DownloadTask extends SwingWorker<Void, Void> {
             }
         }
         if (rockEatUI.getSourceManager().getDownloadedTracks() > 0) {
+        	rockEatUI.getSourceManager().downloadFinished(album);
             label = Messages.DOWNLOAD_COMPLETE;
             label = StringUtils.replace(label, "{0}", Long.toString(rockEatUI.getSourceManager().getDownloadedTracks()));
             label = StringUtils.replace(label, "{1}", FileUtils.byteCountToDisplaySize(rockEatUI.getSourceManager().getBytesDownloaded()));

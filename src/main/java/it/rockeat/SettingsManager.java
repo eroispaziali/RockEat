@@ -2,6 +2,7 @@ package it.rockeat;
 
 import it.rockeat.backend.Backend;
 import it.rockeat.exception.BackendException;
+import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.model.Settings;
 
 import java.io.FileNotFoundException;
@@ -10,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.client.HttpClient;
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Marshaller;
@@ -18,7 +20,7 @@ import org.exolab.castor.xml.ValidationException;
 
 public class SettingsManager {
 	
-	private static final String FILENAME = "rockeat.xml";
+	private static final String FILENAME = ".rockeat.xml";
 	private Settings settings = new Settings();
 	private Backend backend;
 	
@@ -27,14 +29,12 @@ public class SettingsManager {
 		loadFromFile();
 	}
 	
-	public void loadFromBackend() {
+	public void firstTimeInitialize() {
 		try {
 			Map<String, String> keypairs = backend.retrieveKeypairs();
 			settings.setKeypairs(keypairs);
-		} catch (BackendException e) {
-			/* ignore */
-			e.printStackTrace();
-		}
+		} catch (BackendException e) { /* ignore */ }
+		settings.setUid(RandomStringUtils.randomAlphanumeric(16));
 		saveToFile();
 	}
 	
@@ -43,13 +43,11 @@ public class SettingsManager {
 			FileReader reader = new FileReader(FILENAME);
 			settings = (Settings)Unmarshaller.unmarshal(Settings.class, reader);
 		} catch (FileNotFoundException e) {
-			loadFromBackend();
+			firstTimeInitialize();
 		} catch (MarshalException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			firstTimeInitialize();
 		} catch (ValidationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			firstTimeInitialize();
 		}
 		
 	}
@@ -59,22 +57,28 @@ public class SettingsManager {
 	    	FileWriter writer = new FileWriter(FILENAME);
 			Marshaller.marshal(settings, writer);
 		} catch (MarshalException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			/* silently ignore */
 		} catch (ValidationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			/* silently ignore */
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			/* silently ignore */
 		}
+	}
+	
+	public String findKey(String md5) throws UnknownPlayerException, BackendException {
+		Map<String, String> keyPairs = getSettings().getKeypairs();
+    	if (keyPairs.containsKey(md5)) {
+    		return keyPairs.get(md5);
+    	} else {
+    		return backend.findKeypair(md5);
+    	}
 	}
 	
 	public void addNewKnownPlayer(String md5, String key) {
 		try {
 			Map<String, String> keyPairs = getSettings().getKeypairs();
 			backend.storeKeypair(md5, key);
-	        keyPairs.put(md5, key);
+	        keyPairs.put(md5,key);
 	        saveToFile();
 		} catch (BackendException e) {
 			/* silently ignore */

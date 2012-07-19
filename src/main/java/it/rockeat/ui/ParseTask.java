@@ -37,16 +37,6 @@ public class ParseTask extends SwingWorker<Void, Void> {
                 throw new UnknownPlayerException();
             }
             album = rockEatUI.getSourceManager().parse(url);            
-//            album = new Album();
-//            album.setTitle("Album di prova");
-//            album.setArtist("Artista");
-//            List<Track> tracks =new ArrayList<Track>();
-//            Track track = new Track();
-//            track.setAuthor("Artista");
-//            track.setTitle("Lorem Ipsum");
-//            tracks.add(track);
-//            album.setTracks(tracks);
-
         } catch (ConnectionException e) {
         	rockEatUI.reset();
             JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_CONNECTION, Messages.TITLE, 0);
