@@ -25,8 +25,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
@@ -51,7 +49,6 @@ import com.google.gson.JsonSyntaxException;
 
 public class RockitSource implements MusicSource {
 
-    private final static Logger logger = Logger.getLogger(RockitSource.class .getName());
     public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
     public static final String PLAYER_SELECTION_EXPRESSION = "div.player embed[type=application/x-shockwave-flash]";
     public static final String PLAYER_SOURCE_FILE = "rockitPlayer.as";
@@ -140,7 +137,6 @@ public class RockitSource implements MusicSource {
     @Override
     public void download(RockitTrack track, OutputStream out) throws ConnectionException {
         try {
-        	logger.log(Level.INFO, "Download di {0} in corso...", track.toString());
             HttpPost request = new HttpPost(track.getUrl());
             request.setHeader("Referer", REFERER_VALUE);
             List<NameValuePair> qparams = new ArrayList<NameValuePair>();
@@ -167,7 +163,6 @@ public class RockitSource implements MusicSource {
     }
     
     private File fetchPlayer() throws ConnectionException, ParsingException, MalformedURLException {
-    	logger.log(Level.INFO, "Sto scaricando il player");
         URL parsedUrl = new URL(url);
         Element playerEl = document.select(PLAYER_SELECTION_EXPRESSION).first();
         String playerUrl;
@@ -183,7 +178,6 @@ public class RockitSource implements MusicSource {
 				throw new ParsingException(e);
 			}
         } else {
-        	logger.log(Level.WARNING, "Player non trovato nella pagina");
             throw new ParsingException("Player non trovato nella pagina");
         }
     }
@@ -255,11 +249,9 @@ public class RockitSource implements MusicSource {
             }
             album.setTracks(tracks);
             album.setUrl(url);
-            logger.log(Level.INFO, "Trovato: {0}", album.toString());
             return album;
         } else {
             /* Nothing found */
-           logger.log(Level.INFO, "Nessun elemento trovato");
            throw new ParsingException();
         }
     }

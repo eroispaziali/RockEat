@@ -48,7 +48,7 @@ public class SourceManager {
     	if (musicSource==null) {
     		musicSource = new RockitSource(httpClient, settingsManager);
     	}
-    	musicSource.tuneIn(url);
+    	musicSource.tuneIn(ParsingUtils.addProtocolPrefixIfMissing(url));
         return musicSource;
     }
     

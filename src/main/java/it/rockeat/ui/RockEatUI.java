@@ -44,6 +44,7 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     
     public void startParsing(String url) {
         try {
+        	progressBar.setIndeterminate(false);
             buttonParse.setEnabled(false);
             urlField.setEnabled(false);
             parseTask = new ParseTask(this, url);
@@ -58,17 +59,8 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
         }
     }
     
-//    public void showDialog() {
-//        String s = (String)JOptionPane.showInputDialog(
-//            this,
-//            "Conosci la nuova parola segreta?",
-//            "RockEat non è in grado di scaricare questo elemento",
-//            JOptionPane.PLAIN_MESSAGE);
-//    }
-
-
     public void startDownload(RockitAlbum album) {
-		buttonParse.setEnabled(true);
+		buttonParse.setEnabled(false);
 		urlField.setEnabled(true);
 		progressBar.setIndeterminate(false);
 		progressBar.setString("");
@@ -231,13 +223,9 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(RockEatUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(RockEatUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(RockEatUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(RockEatUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
