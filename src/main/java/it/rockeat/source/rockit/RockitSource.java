@@ -5,8 +5,8 @@ import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpUtils;
-import it.rockeat.model.RockitAlbum;
+import it.rockeat.http.ConnectionManager;
+import it.rockeat.model.Album;
 import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
 import it.rockeat.util.ActionScriptUtils;
@@ -49,6 +49,7 @@ import com.google.gson.JsonSyntaxException;
 
 public class RockitSource implements MusicSource {
 
+	public static final String ARTWORK_SELECTION_EXPRESSION = ".datialbum a";
     public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
     public static final String PLAYER_SELECTION_EXPRESSION = "div.player embed[type=application/x-shockwave-flash]";
     public static final String PLAYER_SOURCE_FILE = "rockitPlayer.as";
@@ -168,12 +169,13 @@ public class RockitSource implements MusicSource {
         String playerUrl;
         if (playerEl != null && playerEl.hasAttr("src")) {
             playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + playerEl.attr("src");
-            InputStream playerData = HttpUtils.httpGet(playerUrl);
+            InputStream playerData = ConnectionManager.httpGet(playerUrl);
 			try {
-				OutputStream tmpFile = new FileOutputStream(TEMP_FILENAME);
+				String filename = StringUtils.substringAfterLast(playerUrl, "/");
+				OutputStream tmpFile = new FileOutputStream(filename);
 				IOUtils.copy(playerData,tmpFile); 
 				tmpFile.close();
-				return new File(TEMP_FILENAME);
+				return new File(filename);
 			} catch (IOException e) {
 				throw new ParsingException(e);
 			}
@@ -209,14 +211,16 @@ public class RockitSource implements MusicSource {
     }
     
     @Override
-    public RockitAlbum findAlbum() throws ParsingException {
-        RockitAlbum album = new RockitAlbum();
+    public Album findAlbum() throws ParsingException {
+        Album album = new Album();
         String albumTitle;
         String albumArtist;
         List<RockitTrack> tracks = new ArrayList<RockitTrack>();
         Elements playlistEl = document.select(PARSING_TRACK_SELECTION_EXPRESSION);
         Integer trackNumber = 0;
         if (CollectionUtils.isNotEmpty(playlistEl)) {
+        	
+        	 /* Tracks */
             for (Element trackEl : playlistEl) {
                 String trackId = trackEl.attr("rel");
                 if (StringUtils.isNotBlank(trackId)) {
@@ -233,6 +237,8 @@ public class RockitSource implements MusicSource {
                     }
                 }
             }
+            
+            /* Title */
             Elements title = document.select("title");
             if (CollectionUtils.isNotEmpty(title)) {
                 String meta = title.get(0).text();
@@ -249,6 +255,28 @@ public class RockitSource implements MusicSource {
             }
             album.setTracks(tracks);
             album.setUrl(url);
+            
+            /* Artwork */
+            Element artworkEl = document.select(ARTWORK_SELECTION_EXPRESSION).first();
+            if (artworkEl!=null && artworkEl.hasAttr("href")) {
+            	try {
+	            	URL parsedUrl = new URL(url);
+	            	String artworkUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + artworkEl.attr("href");
+	            	InputStream artworkData = ConnectionManager.httpGet(artworkUrl);
+	            	String filename = StringUtils.substringAfterLast(artworkUrl, "/");
+    				OutputStream tmpFile = new FileOutputStream(filename);
+    				IOUtils.copy(artworkData,tmpFile); 
+    				tmpFile.close();
+    				album.setArtwork(new File(filename));
+            	} catch (MalformedURLException e) {
+            		/* silently ignore */
+            	} catch (ConnectionException e) {
+            		/* silently ignore */
+            	} catch (IOException e) {
+            		/* silently ignore */
+				}
+            }
+            
             return album;
         } else {
             /* Nothing found */

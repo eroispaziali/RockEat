@@ -6,9 +6,9 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpUtils;
+import it.rockeat.http.ConnectionManager;
 import it.rockeat.http.RockCrawler;
-import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.Album;
 import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
 import it.rockeat.util.FormatUtils;
@@ -61,7 +61,7 @@ public class RockEatCli {
 		       int numberOfCrawlers = 1;
 		       CrawlConfig config = new CrawlConfig();
 		       config.setCrawlStorageFolder(crawlStorageFolder);
-		       config.setUserAgentString(HttpUtils.USER_AGENT_STRING);
+		       config.setUserAgentString(ConnectionManager.USER_AGENT_STRING);
 		       config.setPolitenessDelay(10);
 		       config.setMaxDepthOfCrawling(7);
 		       config.setMaxPagesToFetch(10000);
@@ -120,7 +120,7 @@ public class RockEatCli {
 								}
 							} else {
 								out.println(Messages.PARSE_IN_PROGRESS);
-								RockitAlbum album = controller.findAlbum(url);
+								Album album = controller.findAlbum(url);
 								out.println(FormatUtils.formatAlbumData(album));
 								
 								if (commandLine.hasOption(EAT)) {

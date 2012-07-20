@@ -8,8 +8,8 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.HttpUtils;
-import it.rockeat.model.RockitAlbum;
+import it.rockeat.http.ConnectionManager;
+import it.rockeat.model.Album;
 import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
 import it.rockeat.source.rockit.RockitSource;
@@ -39,7 +39,7 @@ public class SourceManager {
     private Backend backend;
 
     public SourceManager() {
-        httpClient = HttpUtils.createClient();
+        httpClient = ConnectionManager.createClient();
         settingsManager = new SettingsManager(httpClient);
         backend = new Backend(httpClient);
     }
@@ -52,7 +52,7 @@ public class SourceManager {
         return musicSource;
     }
     
-    public void downloadFinished(RockitAlbum album) {
+    public void downloadFinished(Album album) {
     	DownloadActivity downloadActivity = new DownloadActivity();
     	downloadActivity.setTitle(album.getTitle());
     	downloadActivity.setArtist(album.getArtist());
@@ -68,7 +68,7 @@ public class SourceManager {
     }
 
     @SuppressWarnings("unused")
-    public RockitAlbum findAlbum(String url) throws BackendException, MalformedURLException, ConnectionException, ParsingException {
+    public Album findAlbum(String url) throws BackendException, MalformedURLException, ConnectionException, ParsingException {
     	/* reset counters */
     	downloadedTracks = 0L;
         bytesDownloaded = 0L;
@@ -77,12 +77,12 @@ public class SourceManager {
         url = ParsingUtils.addProtocolPrefixIfMissing(url);
         URL parsedUrl = new URL(url);
         MusicSource musicSource = tuneInSource(url);
-        RockitAlbum album = musicSource.findAlbum();
+        Album album = musicSource.findAlbum();
         album.setUrl(url);
         return album;
     }
 
-    public void download(RockitAlbum album, RockitTrack track) throws BackendException, ConnectionException, DownloadException, FileSaveException, MalformedURLException, ParsingException {
+    public void download(Album album, RockitTrack track) throws BackendException, ConnectionException, DownloadException, FileSaveException, MalformedURLException, ParsingException {
         MusicSource musicSource = tuneInSource(album.getUrl());
         String folderName = FileManagementUtils.createFolder(album);
         String filePath = folderName + FileManagementUtils.createFilename(album, track);

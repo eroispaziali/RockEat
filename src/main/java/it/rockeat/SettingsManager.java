@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -20,6 +21,7 @@ import org.exolab.castor.xml.ValidationException;
 
 public class SettingsManager {
 	
+	public static final String ROCKEAT_VERSION = "0.2";
 	private static final String FILENAME = ".rockeat.xml";
 	private Settings settings = new Settings();
 	private Backend backend;
@@ -55,6 +57,7 @@ public class SettingsManager {
 	public void saveToFile() {
 	    try {
 	    	FileWriter writer = new FileWriter(FILENAME);
+	    	settings.setLastUpdated(Calendar.getInstance().getTime());
 			Marshaller.marshal(settings, writer);
 		} catch (MarshalException e) {
 			/* silently ignore */
@@ -66,12 +69,12 @@ public class SettingsManager {
 	}
 	
 	public String findKey(String md5) throws UnknownPlayerException, BackendException {
-		Map<String, String> keyPairs = getSettings().getKeypairs();
-    	if (keyPairs.containsKey(md5)) {
-    		return keyPairs.get(md5);
+		Map<String, String> keypairs = settings.getKeypairs();
+    	if (keypairs.containsKey(md5)) {
+    		return keypairs.get(md5);
     	} else {
     		String key = backend.findKeypair(md5);
-    		keyPairs.put(md5, key);
+    		keypairs.put(md5, key);
     		saveToFile();
     		return key;
     	}

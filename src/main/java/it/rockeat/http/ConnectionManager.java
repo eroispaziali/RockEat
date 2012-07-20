@@ -25,9 +25,9 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
-public class HttpUtils {
+public class ConnectionManager {
 	
-	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.X.Y.Z Safari/525.13";
+	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11";
 	private final static Integer MaxRedirects = 10;
 	private final static Boolean AllowCircularRedirects = Boolean.FALSE;
 	private final static Integer httpConnectionTimeout = 10000;
@@ -80,7 +80,7 @@ public class HttpUtils {
 	public static InputStream httpGet(String url) throws ConnectionException {
 		try {
 			HttpGet httpget = new HttpGet(url);
-			HttpClient httpClient = HttpUtils.createClient();
+			HttpClient httpClient = createClient();
 			HttpResponse response = httpClient.execute(httpget);
 			HttpEntity responseEntity = response.getEntity();
 			return responseEntity.getContent();

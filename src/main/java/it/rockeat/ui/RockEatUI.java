@@ -5,7 +5,7 @@
 package it.rockeat.ui;
 
 import it.rockeat.SourceManager;
-import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.Album;
 import it.rockeat.util.ParsingUtils;
 
 import java.awt.Image;
@@ -59,7 +59,7 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
         }
     }
     
-    public void startDownload(RockitAlbum album) {
+    public void startDownload(Album album) {
 		buttonParse.setEnabled(false);
 		urlField.setEnabled(true);
 		progressBar.setIndeterminate(false);

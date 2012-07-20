@@ -2,7 +2,7 @@ package it.rockeat.http;
 
 import it.rockeat.SourceManager;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.RockitAlbum;
+import it.rockeat.model.Album;
 import it.rockeat.util.FormatUtils;
 
 import java.util.HashMap;
@@ -23,7 +23,7 @@ public class RockCrawler extends WebCrawler {
     
     private final static Pattern URL_AVOID = Pattern.compile(".*/(canzone|user|news|web|compilation)/.*");
     
-    private Map<String, RockitAlbum> albums = new HashMap<String, RockitAlbum>();
+    private Map<String, Album> albums = new HashMap<String, Album>();
 	 
 	@Override
     public boolean shouldVisit(WebURL url) {
@@ -40,7 +40,7 @@ public class RockCrawler extends WebCrawler {
 		String url = page.getWebURL().getURL();
 		SourceManager controller = new SourceManager();
 		try {
-			RockitAlbum album = controller.findAlbum(url);
+			Album album = controller.findAlbum(url);
 			if (album.getTracksCount() > 0) {
 				albums.put(url, album);
 				System.out.println(" " + album.getUrl());

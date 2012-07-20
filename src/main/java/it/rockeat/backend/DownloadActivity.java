@@ -1,5 +1,7 @@
 package it.rockeat.backend;
 
+import it.rockeat.SettingsManager;
+
 public class DownloadActivity {
 	
 	public final static String REMOTE_CLASSNAME = "Download";
@@ -13,6 +15,11 @@ public class DownloadActivity {
 	private String uid;
 	private String createdAt;
 	private String updatedAt;
+	private String version;
+	
+	public DownloadActivity() {
+		version = SettingsManager.ROCKEAT_VERSION;
+	}
 	
 	public Long getTracks() {
 		return tracks;
@@ -67,6 +74,12 @@ public class DownloadActivity {
 	}
 	public void setTitle(String title) {
 		this.title = title;
+	}
+	public String getVersion() {
+		return version;
+	}
+	public void setVersion(String version) {
+		this.version = version;
 	}
 
 	
