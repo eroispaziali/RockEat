@@ -8,11 +8,9 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.ConnectionManager;
 import it.rockeat.model.Album;
 import it.rockeat.model.RockitTrack;
 import it.rockeat.source.MusicSource;
-import it.rockeat.source.rockit.RockitSource;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
 import it.rockeat.util.ParsingUtils;
@@ -26,28 +24,20 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.http.client.HttpClient;
+
+import com.google.inject.Inject;
 
 public class SourceManager {
 
     private Boolean id3TaggingEnabled = Boolean.TRUE;
     private Long downloadedTracks = 0L;
     private Long bytesDownloaded = 0L;
-    private MusicSource musicSource;
-    private HttpClient httpClient;
-    private SettingsManager settingsManager;
-    private Backend backend;
-
-    public SourceManager() {
-        httpClient = ConnectionManager.createClient();
-        settingsManager = new SettingsManager(httpClient);
-        backend = new Backend(httpClient);
-    }
+    
+    @Inject private MusicSource musicSource;
+    @Inject private SettingsManager settingsManager;
+    @Inject private Backend backend;
 
     public MusicSource tuneInSource(String url) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-    	if (musicSource==null) {
-    		musicSource = new RockitSource(httpClient, settingsManager);
-    	}
     	musicSource.tuneIn(ParsingUtils.addProtocolPrefixIfMissing(url));
         return musicSource;
     }
@@ -137,14 +127,6 @@ public class SourceManager {
 
 	public void setMusicSource(MusicSource musicSource) {
 		this.musicSource = musicSource;
-	}
-
-	public HttpClient getHttpClient() {
-		return httpClient;
-	}
-
-	public void setHttpClient(HttpClient httpClient) {
-		this.httpClient = httpClient;
 	}
 
 	public SettingsManager getSettingsManager() {

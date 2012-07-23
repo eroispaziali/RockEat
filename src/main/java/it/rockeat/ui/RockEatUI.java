@@ -23,6 +23,8 @@ import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.google.inject.Inject;
+
 /**
  *
  * @author l.frattini
@@ -30,9 +32,10 @@ import javax.swing.event.DocumentListener;
 public class RockEatUI extends javax.swing.JFrame implements ActionListener, PropertyChangeListener {
 
 	private static final long serialVersionUID = -1600902258431092978L;
-	private SourceManager sourceManager;
     private ParseTask parseTask;
     private DownloadTask downloadTask;
+    
+    @Inject private SourceManager sourceManager;
 
     public void reset() {
 		buttonParse.setEnabled(true);
@@ -83,7 +86,6 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     	Toolkit kit = Toolkit.getDefaultToolkit();
     	Image icon = kit.createImage(iconUrl);
     	this.setIconImage(icon);
-        sourceManager = new SourceManager();
         initComponents();
     }
 

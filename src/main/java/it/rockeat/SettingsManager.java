@@ -13,21 +13,24 @@ import java.util.Calendar;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.http.client.HttpClient;
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Marshaller;
 import org.exolab.castor.xml.Unmarshaller;
 import org.exolab.castor.xml.ValidationException;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+@Singleton
 public class SettingsManager {
 	
 	public static final String ROCKEAT_VERSION = "0.2";
 	private static final String FILENAME = ".rockeat.xml";
 	private Settings settings = new Settings();
-	private Backend backend;
 	
-	public SettingsManager(HttpClient httpClient) {
-		backend = new Backend(httpClient);
+	@Inject private Backend backend;
+	
+	public SettingsManager() {
 		loadFromFile();
 	}
 	

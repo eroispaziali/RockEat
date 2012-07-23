@@ -1,7 +1,6 @@
 package it.rockeat.source.rockit;
 
 import it.rockeat.SettingsManager;
-import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
@@ -46,8 +45,9 @@ import org.jsoup.select.Elements;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.inject.Inject;
 
-public class RockitSource implements MusicSource {
+public class Rockit implements MusicSource {
 
 	public static final String ARTWORK_SELECTION_EXPRESSION = ".datialbum a";
     public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
@@ -59,19 +59,15 @@ public class RockitSource implements MusicSource {
     public static final String TOKEN_PARAM = "rockitID";
     
     private Document document;
-    private HttpClient httpClient;
     private File player;
     private String hash; 
     private String secret;
-    private SettingsManager settingsManager;
     private String url;
     
+    @Inject private SettingsManager settingsManager;
+    @Inject private ConnectionManager connectionManager;
+    
     public static final String TRACK_LOOKUP_URL = "http://www.rockit.it/web/include/ajax.play.php";
-
-    public RockitSource(HttpClient httpClient, SettingsManager settingsManager) throws BackendException, ConnectionException, ParsingException, MalformedURLException {
-    	this.settingsManager = settingsManager;
-        this.httpClient = httpClient;
-    }
     
     private static RockitTrack cleanup(RockitTrack track) {
         String cleanedTitle = track.getTitle();
@@ -139,6 +135,7 @@ public class RockitSource implements MusicSource {
     @Override
     public void download(RockitTrack track, OutputStream out) throws ConnectionException {
         try {
+        	HttpClient httpClient = connectionManager.createClient();
             HttpPost request = new HttpPost(track.getUrl());
             request.setHeader("Referer", REFERER_VALUE);
             List<NameValuePair> qparams = new ArrayList<NameValuePair>();
@@ -154,6 +151,7 @@ public class RockitSource implements MusicSource {
 
     private Document fetchDocument() throws ConnectionException {
         try {
+        	HttpClient httpClient = connectionManager.createClient();
             HttpGet request = new HttpGet(url);
             HttpResponse response = httpClient.execute(request);
             HttpEntity responseEntity = response.getEntity();
@@ -170,7 +168,7 @@ public class RockitSource implements MusicSource {
         String playerUrl;
         if (playerEl != null && playerEl.hasAttr("src")) {
             playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + playerEl.attr("src");
-            InputStream playerData = ConnectionManager.httpGet(playerUrl);
+            InputStream playerData = connectionManager.httpGet(playerUrl);
 			try {
 				String filename = StringUtils.substringAfterLast(playerUrl, "/");
 				OutputStream tmpFile = new FileOutputStream(filename);
@@ -187,6 +185,7 @@ public class RockitSource implements MusicSource {
 
     private RockitTrack lookupTrack(String id, String lookupUrl) throws ConnectionException, LookupException {
         try {
+        	HttpClient httpClient = connectionManager.createClient();
             HttpPost request = new HttpPost(lookupUrl);
             List<NameValuePair> qparams = new ArrayList<NameValuePair>();
             qparams.add(new BasicNameValuePair("id", id));
@@ -263,7 +262,7 @@ public class RockitSource implements MusicSource {
             	try {
 	            	URL parsedUrl = new URL(url);
 	            	String artworkUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost() + artworkEl.attr("href");
-	            	InputStream artworkData = ConnectionManager.httpGet(artworkUrl);
+	            	InputStream artworkData = connectionManager.httpGet(artworkUrl);
 	            	String filename = StringUtils.substringAfterLast(artworkUrl, "/");
     				OutputStream tmpFile = new FileOutputStream(filename);
     				IOUtils.copy(artworkData,tmpFile); 

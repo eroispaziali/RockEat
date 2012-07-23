@@ -2,6 +2,7 @@ package it.rockeat.backend;
 
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.UnknownPlayerException;
+import it.rockeat.http.ConnectionManager;
 import it.rockeat.util.ParsingUtils;
 
 import java.io.IOException;
@@ -18,19 +19,18 @@ import org.apache.http.entity.StringEntity;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.inject.Inject;
 
 public class Backend {
 	
 	private static final String ENDPOINT = "https://api.parse.com/1/";
 	private static final String APPLICATION_ID = "SiPhSW3pVPd5k8TrHuASQFIZEczKukZBjHD569gn";
 	private static final String CLIENT_KEY = "oztW8NntGlAkwgoIyMiVwrth1VBa6w8tpqFsNYNx";
-	private HttpClient httpClient;
-        
-	public Backend(HttpClient httpClient) {
-		this.httpClient = httpClient;
-	}
 	
+	@Inject private ConnectionManager connectionManager;
+        
 	private InputStream doParseGet(String query) throws IllegalStateException, IOException {
+		HttpClient httpClient = connectionManager.createClient();
 		HttpGet request = new HttpGet(ENDPOINT + query);
 		request.setHeader("Content-Type", "application/json");
 		request.setHeader("X-Parse-Application-Id", APPLICATION_ID);
@@ -41,6 +41,7 @@ public class Backend {
 	}
 
 	private InputStream doParseStore(String entity, Object item) throws IllegalStateException, IOException {
+		HttpClient httpClient = connectionManager.createClient();
 		HttpPost request = new HttpPost(ENDPOINT + entity);		
 		request.setHeader("Content-Type", "application/json");
 		request.setHeader("X-Parse-Application-Id", APPLICATION_ID);

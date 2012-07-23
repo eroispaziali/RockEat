@@ -24,6 +24,9 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
+import com.google.inject.Singleton;
+
+@Singleton
 public class ConnectionManager {
 	
 	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11";
@@ -57,14 +60,14 @@ public class ConnectionManager {
 		return registry;
 	}
 	
-	public static HttpClient createClient() {
+	public HttpClient createClient() {
         DefaultHttpClient httpclient = new DefaultHttpClient(createHttpParams());
         httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
         httpclient.addResponseInterceptor(new GzipHttpResponseInterceptor());
         return httpclient;
 	}
 	
-	public static HttpClient createClient(HttpHost proxy, Credentials credentials) {
+	public HttpClient createClient(HttpHost proxy, Credentials credentials) {
         DefaultHttpClient client = new DefaultHttpClient(createHttpParams());
 		client.getCredentialsProvider().setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()), credentials);
 		client.setRoutePlanner(new ProxyHttpRoutePlanner(proxy));
@@ -76,7 +79,7 @@ public class ConnectionManager {
 		return client;
 	}
 	
-	public static InputStream httpGet(String url) throws ConnectionException {
+	public InputStream httpGet(String url) throws ConnectionException {
 		try {
 			HttpGet httpget = new HttpGet(url);
 			HttpClient httpClient = createClient();
