@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 public interface MusicSource {
 
 	public void tuneIn(String url) throws ConnectionException, MalformedURLException, ParsingException;
+	public void tearDown();
 	public Album findAlbum() throws ParsingException;
 	public void download(RockitTrack track, OutputStream outputStream) throws ConnectionException;
 	public boolean runTest();
