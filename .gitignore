@@ -5,5 +5,5 @@ Thumbs.db
 target/
 bin/
 /nbactions.xml
-/rockeat.tmp
-/rockeat.xml
+/.rockeat.tmp
+/.rockeat.xml

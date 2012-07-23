@@ -127,7 +127,8 @@ public class RockitSource implements MusicSource {
     	}
     }
     
-    public void finalize() {
+    @Override
+    public void tearDown() {
     	url = null;
     	document = null;
     	hash = null;
@@ -296,5 +297,6 @@ public class RockitSource implements MusicSource {
 	public void setSecret(String secret) {
 		this.secret = secret;
 	}
+
 
 }
