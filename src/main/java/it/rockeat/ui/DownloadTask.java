@@ -36,7 +36,7 @@ public class DownloadTask extends SwingWorker<Void, Void> {
             label = track.toString();
             try {
                 setProgress(++count);
-                rockEatUI.getSourceManager().download(album, track);
+                rockEatUI.getController().download(album, track);
             } catch (FileSaveException e) {
                 JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_FILEWRITE, Messages.TITLE, 0);
                 setProgress(ImageObserver.ABORT);
@@ -50,11 +50,11 @@ public class DownloadTask extends SwingWorker<Void, Void> {
                 rockEatUI.reset();
             }
         }
-        if (rockEatUI.getSourceManager().getDownloadedTracks() > 0) {
-        	rockEatUI.getSourceManager().downloadFinished(album);
+        if (rockEatUI.getController().getDownloadedTracks() > 0) {
+        	rockEatUI.getController().downloadFinished(album);
             label = Messages.DOWNLOAD_COMPLETE;
-            label = StringUtils.replace(label, "{0}", Long.toString(rockEatUI.getSourceManager().getDownloadedTracks()));
-            label = StringUtils.replace(label, "{1}", FileUtils.byteCountToDisplaySize(rockEatUI.getSourceManager().getBytesDownloaded()));
+            label = StringUtils.replace(label, "{0}", Long.toString(rockEatUI.getController().getDownloadedTracks()));
+            label = StringUtils.replace(label, "{1}", FileUtils.byteCountToDisplaySize(rockEatUI.getController().getBytesDownloaded()));
         } else {
             label = Messages.ERROR_DOWNLOAD;
         }

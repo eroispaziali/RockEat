@@ -60,6 +60,7 @@ public class Rockit implements MusicSource {
     
     private Document document;
     private File player;
+    private File artwork;
     private String hash; 
     private String secret;
     private String url;
@@ -88,7 +89,7 @@ public class Rockit implements MusicSource {
     	} catch (Exception e) {
     		/* decompile */
 			try {
-		    	ActionScriptUtils.decompileSwf(player.getAbsolutePath(), TEMP_FOLDER);
+		    	ActionScriptUtils.decompile(player.getAbsolutePath(), TEMP_FOLDER);
 				String source = FileManagementUtils.findFile(TEMP_FOLDER, PLAYER_SOURCE_FILE);
 				String line = FileManagementUtils.searchLine(source, TOKEN_PARAM);
 				String key = StringUtils.substringBetween(line, "\"");
@@ -124,12 +125,13 @@ public class Rockit implements MusicSource {
     }
     
     @Override
-    public void tearDown() {
+    public void release() {
     	url = null;
     	document = null;
     	hash = null;
     	secret = null;
     	FileUtils.deleteQuietly(player);
+    	FileUtils.deleteQuietly(artwork);
     }
 
     @Override
@@ -267,7 +269,8 @@ public class Rockit implements MusicSource {
     				OutputStream tmpFile = new FileOutputStream(filename);
     				IOUtils.copy(artworkData,tmpFile); 
     				tmpFile.close();
-    				album.setArtwork(new File(filename));
+    				artwork = new File(filename);
+    				album.setArtwork(artwork);
             	} catch (MalformedURLException e) {
             		/* silently ignore */
             	} catch (ConnectionException e) {

@@ -4,7 +4,7 @@
  */
 package it.rockeat.ui;
 
-import it.rockeat.SourceManager;
+import it.rockeat.Controller;
 import it.rockeat.model.Album;
 import it.rockeat.util.ParsingUtils;
 
@@ -14,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.JOptionPane;
@@ -22,6 +21,8 @@ import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.google.inject.Inject;
 
@@ -35,14 +36,24 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     private ParseTask parseTask;
     private DownloadTask downloadTask;
     
-    @Inject private SourceManager sourceManager;
+    @Inject private Controller controller;
 
+    private void enableOrDisableButton() {
+    	String urlToParse = urlField.getText();
+    	Boolean enabled = StringUtils.isNotBlank(urlToParse) && ParsingUtils.isValidUrl(urlToParse);
+        buttonParse.setEnabled(enabled);
+
+    }
+    
     public void reset() {
-		buttonParse.setEnabled(true);
 		urlField.setEnabled(true);
 		progressBar.setIndeterminate(false);
 		progressBar.setString("");
 		progressBar.setStringPainted(true);
+		if (controller!=null) {
+			controller.clean();
+		}
+		enableOrDisableButton();
     }
     
     public void startParsing(String url) {
@@ -77,8 +88,8 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
         return progressBar;
     }
 
-    public SourceManager getSourceManager() {
-        return sourceManager;
+    public Controller getController() {
+        return controller;
     }
 
     public RockEatUI() {
@@ -87,6 +98,7 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     	Image icon = kit.createImage(iconUrl);
     	this.setIconImage(icon);
         initComponents();
+        reset();
     }
 
     /**
@@ -173,30 +185,18 @@ public class RockEatUI extends javax.swing.JFrame implements ActionListener, Pro
     private void urlFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_urlFieldPropertyChange
         urlField.getDocument().addDocumentListener(new DocumentListener() {
 
-            public void enableButtonIfUrlIsValid() {
-                try {
-                    String urlSt = ParsingUtils.addProtocolPrefixIfMissing(urlField.getText());
-                    @SuppressWarnings("unused")
-					URL url = new URL(urlSt);
-                    buttonParse.setEnabled(true);
-
-                } catch (MalformedURLException ex) {
-                    buttonParse.setEnabled(false);
-                }
-            }
-
             public void changedUpdate(DocumentEvent e) {
-                enableButtonIfUrlIsValid();
+            	enableOrDisableButton();
             }
 
             @Override
             public void insertUpdate(DocumentEvent e) {
-                enableButtonIfUrlIsValid();
+            	enableOrDisableButton();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                enableButtonIfUrlIsValid();
+            	enableOrDisableButton();
             }
         });
 

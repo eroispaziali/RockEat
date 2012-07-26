@@ -1,16 +1,19 @@
 package it.rockeat.http;
 
+import it.rockeat.SettingsManager;
 import it.rockeat.exception.ConnectionException;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.ClientPNames;
@@ -24,23 +27,25 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class ConnectionManager {
 	
-	public static final String USER_AGENT_STRING = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11";
 	private final static Integer MaxRedirects = 10;
 	private final static Boolean AllowCircularRedirects = Boolean.FALSE;
 	private final static Integer httpConnectionTimeout = 10000;
 	private final static Integer httpSocketTimeout = 10000;
 	
-	private static HttpParams createHttpParams() {
+	@Inject private SettingsManager settingsManager;
+	
+	private HttpParams createHttpParams() {
 		HttpParams params = new BasicHttpParams();
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
         HttpProtocolParams.setContentCharset(params, "UTF-8");
         HttpProtocolParams.setUseExpectContinue(params, true);
-        HttpProtocolParams.setUserAgent(params, USER_AGENT_STRING);
+        HttpProtocolParams.setUserAgent(params, settingsManager.getUserAgent());
         params.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
 	    params.setIntParameter(ClientPNames.MAX_REDIRECTS, MaxRedirects);
 	    params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, AllowCircularRedirects);
@@ -61,10 +66,16 @@ public class ConnectionManager {
 	}
 	
 	public HttpClient createClient() {
-        DefaultHttpClient httpclient = new DefaultHttpClient(createHttpParams());
-        httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
-        httpclient.addResponseInterceptor(new GzipHttpResponseInterceptor());
-        return httpclient;
+		if (BooleanUtils.isTrue(settingsManager.getSettings().getProxyEnabled())) {
+			Credentials credentials = new UsernamePasswordCredentials(settingsManager.getSettings().getProxyUsername(), settingsManager.getSettings().getProxyPassword());
+			return createClient(settingsManager.getSettings().getProxyHost(), credentials);
+		} else {
+			 DefaultHttpClient httpclient = new DefaultHttpClient(createHttpParams());
+	        httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
+	        httpclient.addResponseInterceptor(new GzipHttpResponseInterceptor());
+	        return httpclient;
+		}
+       
 	}
 	
 	public HttpClient createClient(HttpHost proxy, Credentials credentials) {

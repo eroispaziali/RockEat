@@ -1,6 +1,6 @@
 package it.rockeat.ui;
 
-import it.rockeat.SourceManager;
+import it.rockeat.Controller;
 import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
@@ -64,7 +64,7 @@ public class RockEatCli {
 		    try {
 		    	CommandLineParser parser = new GnuParser();
 		        CommandLine commandLine = parser.parse(options,args);
-				SourceManager controller = new SourceManager();
+				Controller controller = new Controller();
 				controller.setId3TaggingEnabled(!commandLine.hasOption(DISABLE_TAGGING));
 				if (commandLine.hasOption(URL)) {
 					if (commandLine.hasOption(URL)) {

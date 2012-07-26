@@ -3,6 +3,8 @@ package it.rockeat.util;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -71,6 +73,17 @@ public class ParsingUtils {
 		} else {
 			return StringUtils.EMPTY;
 		}
+	}
+	
+	public static boolean isValidUrl(String url) {
+		try {
+			@SuppressWarnings("unused")
+			URL parsed = new URL(url);
+			return true;
+		} catch (MalformedURLException e) {
+			return false;
+		}
+		
 	}
 	
 	public static String streamToString(InputStream is) {

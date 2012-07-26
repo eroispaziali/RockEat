@@ -27,7 +27,7 @@ import org.apache.commons.lang3.BooleanUtils;
 
 import com.google.inject.Inject;
 
-public class SourceManager {
+public class Controller {
 
     private Boolean id3TaggingEnabled = Boolean.TRUE;
     private Long downloadedTracks = 0L;
@@ -42,7 +42,12 @@ public class SourceManager {
         return musicSource;
     }
     
+    public void clean() {
+    	musicSource.release();
+    }
+    
     public void downloadFinished(Album album) {
+    	clean();
     	DownloadActivity downloadActivity = new DownloadActivity();
     	downloadActivity.setTitle(album.getTitle());
     	downloadActivity.setArtist(album.getArtist());
@@ -120,30 +125,6 @@ public class SourceManager {
     public Long getBytesDownloaded() {
         return bytesDownloaded;
     }
-
-	public MusicSource getMusicSource() {
-		return musicSource;
-	}
-
-	public void setMusicSource(MusicSource musicSource) {
-		this.musicSource = musicSource;
-	}
-
-	public SettingsManager getSettingsManager() {
-		return settingsManager;
-	}
-
-	public void setSettingsManager(SettingsManager settingsManager) {
-		this.settingsManager = settingsManager;
-	}
-
-	public Backend getBackend() {
-		return backend;
-	}
-
-	public void setBackend(Backend backend) {
-		this.backend = backend;
-	}
 
 	public void setDownloadedTracks(Long downloadedTracks) {
 		this.downloadedTracks = downloadedTracks;

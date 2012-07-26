@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.HttpHost;
 import org.exolab.castor.xml.MarshalException;
 import org.exolab.castor.xml.Marshaller;
 import org.exolab.castor.xml.Unmarshaller;
@@ -24,7 +25,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class SettingsManager {
 	
-	public static final String ROCKEAT_VERSION = "0.2";
+	public static final String ROCKEAT_VERSION = "0.2.1";
+	public static final String ROCKEAT_DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11";
 	private static final String FILENAME = ".rockeat.xml";
 	private Settings settings = new Settings();
 	
@@ -35,11 +37,12 @@ public class SettingsManager {
 	}
 	
 	public void firstTimeInitialize() {
-		try {
-			Map<String, String> keypairs = backend.retrieveKeypairs();
-			settings.setKeypairs(keypairs);
-		} catch (BackendException e) { /* ignore */ }
+		settings.setProxyEnabled(false);
+		settings.setProxyHost(new HttpHost("",8080));
+		settings.setProxyUsername("");
+		settings.setProxyPassword("");
 		settings.setUid(RandomStringUtils.randomAlphanumeric(16));
+		settings.setUserAgent(ROCKEAT_DEFAULT_USER_AGENT);
 		saveToFile();
 	}
 	
@@ -81,6 +84,10 @@ public class SettingsManager {
     		saveToFile();
     		return key;
     	}
+	}
+	
+	public String getUserAgent() {
+		return settings.getUserAgent();
 	}
 	
 	public void addNewKey(String md5, String key) {

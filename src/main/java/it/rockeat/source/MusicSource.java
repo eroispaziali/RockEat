@@ -15,7 +15,7 @@ import com.google.inject.ImplementedBy;
 public interface MusicSource {
 
 	public void tuneIn(String url) throws ConnectionException, MalformedURLException, ParsingException;
-	public void tearDown();
+	public void release();
 	
 	public Album findAlbum() throws ParsingException;
 	public void download(RockitTrack track, OutputStream outputStream) throws ConnectionException;

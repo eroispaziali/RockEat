@@ -20,7 +20,7 @@ import com.jpexs.asdec.tags.Tag;
  */
 public class ActionScriptUtils {
 
-    public static void decompileSwf(String filename, String outdir) throws FileNotFoundException, IOException {
+    public static void decompile(String filename, String outdir) throws FileNotFoundException, IOException {
         FileInputStream fis = new FileInputStream(filename);
         InputStream bis = new BufferedInputStream(fis);
         SWF swf = new SWF(bis);

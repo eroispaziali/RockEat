@@ -32,11 +32,11 @@ public class ParseTask extends SwingWorker<Void, Void> {
         rockEatUI.getProgressBar().setString(Messages.PARSE_IN_PROGRESS);
         rockEatUI.getProgressBar().setStringPainted(true);
         try {
-            MusicSource eater = rockEatUI.getSourceManager().tuneInSource(url);
+            MusicSource eater = rockEatUI.getController().tuneInSource(url);
             if (BooleanUtils.isFalse(eater.runTest())) {
                 throw new UnknownPlayerException();
             }
-            album = rockEatUI.getSourceManager().findAlbum(url);            
+            album = rockEatUI.getController().findAlbum(url);            
         } catch (ConnectionException e) {
         	rockEatUI.reset();
             JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_CONNECTION, Messages.TITLE, 0);

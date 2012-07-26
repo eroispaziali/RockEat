@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.http.HttpHost;
+
 public class Settings {
 	
 	private String uid;
@@ -11,6 +13,10 @@ public class Settings {
 	private Map<String,String> keypairs = new HashMap<String, String>();
 	private String userAgent;
 	private Date lastUpdated;
+	private Boolean proxyEnabled = Boolean.FALSE;
+	private HttpHost proxyHost;
+	private String proxyUsername;
+	private String proxyPassword;
 	
 	public User getUser() {
 		return user;
@@ -42,6 +48,31 @@ public class Settings {
 	public void setLastUpdated(Date lastUpdated) {
 		this.lastUpdated = lastUpdated;
 	}
+	public Boolean getProxyEnabled() {
+		return proxyEnabled;
+	}
+	public void setProxyEnabled(Boolean proxyEnabled) {
+		this.proxyEnabled = proxyEnabled;
+	}
+	public HttpHost getProxyHost() {
+		return proxyHost;
+	}
+	public void setProxyHost(HttpHost proxyHost) {
+		this.proxyHost = proxyHost;
+	}
+	public String getProxyUsername() {
+		return proxyUsername;
+	}
+	public void setProxyUsername(String proxyUsername) {
+		this.proxyUsername = proxyUsername;
+	}
+	public String getProxyPassword() {
+		return proxyPassword;
+	}
+	public void setProxyPassword(String proxyPassword) {
+		this.proxyPassword = proxyPassword;
+	}
+	
 	
 	
 
