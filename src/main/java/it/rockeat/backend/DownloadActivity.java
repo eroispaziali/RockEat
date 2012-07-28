@@ -3,9 +3,9 @@ package it.rockeat.backend;
 import it.rockeat.SettingsManager;
 
 public class DownloadActivity {
-	
+
 	public final static String REMOTE_CLASSNAME = "Download";
-	
+
 	private Long tracks;
 	private Long bytes;
 	private String objectId;
@@ -16,71 +16,89 @@ public class DownloadActivity {
 	private String createdAt;
 	private String updatedAt;
 	private String version;
-	
+
 	public DownloadActivity() {
 		version = SettingsManager.ROCKEAT_VERSION;
 	}
-	
+
 	public Long getTracks() {
 		return tracks;
 	}
+
 	public void setTracks(Long tracks) {
 		this.tracks = tracks;
 	}
+
 	public Long getBytes() {
 		return bytes;
 	}
+
 	public void setBytes(Long bytes) {
 		this.bytes = bytes;
 	}
+
 	public String getObjectId() {
 		return objectId;
 	}
+
 	public void setObjectId(String objectId) {
 		this.objectId = objectId;
 	}
+
 	public String getUrl() {
 		return url;
 	}
+
 	public void setUrl(String url) {
 		this.url = url;
 	}
+
 	public String getArtist() {
 		return artist;
 	}
+
 	public void setArtist(String artist) {
 		this.artist = artist;
 	}
+
 	public String getUid() {
 		return uid;
 	}
+
 	public void setUid(String uid) {
 		this.uid = uid;
 	}
+
 	public String getCreatedAt() {
 		return createdAt;
 	}
+
 	public void setCreatedAt(String createdAt) {
 		this.createdAt = createdAt;
 	}
+
 	public String getUpdatedAt() {
 		return updatedAt;
 	}
+
 	public void setUpdatedAt(String updatedAt) {
 		this.updatedAt = updatedAt;
 	}
+
 	public String getTitle() {
 		return title;
 	}
+
 	public void setTitle(String title) {
 		this.title = title;
 	}
+
 	public String getVersion() {
 		return version;
 	}
+
 	public void setVersion(String version) {
 		this.version = version;
 	}
 
-	
 }

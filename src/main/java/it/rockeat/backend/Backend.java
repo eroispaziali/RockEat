@@ -22,14 +22,15 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 
 public class Backend {
-	
+
 	private static final String ENDPOINT = "https://api.parse.com/1/";
 	private static final String APPLICATION_ID = "SiPhSW3pVPd5k8TrHuASQFIZEczKukZBjHD569gn";
 	private static final String CLIENT_KEY = "oztW8NntGlAkwgoIyMiVwrth1VBa6w8tpqFsNYNx";
-	
-	@Inject private ConnectionManager connectionManager;
-        
-	private InputStream doParseGet(String query) throws IllegalStateException, IOException {
+
+	@Inject	private ConnectionManager connectionManager;
+
+	private InputStream doParseGet(String query) throws IllegalStateException,
+			IOException {
 		HttpClient httpClient = connectionManager.createClient();
 		HttpGet request = new HttpGet(ENDPOINT + query);
 		request.setHeader("Content-Type", "application/json");
@@ -37,12 +38,13 @@ public class Backend {
 		request.setHeader("X-Parse-REST-API-Key", CLIENT_KEY);
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity responseEntity = response.getEntity();
-		return responseEntity.getContent();		
+		return responseEntity.getContent();
 	}
 
-	private InputStream doParseStore(String entity, Object item) throws IllegalStateException, IOException {
+	private InputStream doParseStore(String entity, Object item)
+			throws IllegalStateException, IOException {
 		HttpClient httpClient = connectionManager.createClient();
-		HttpPost request = new HttpPost(ENDPOINT + entity);		
+		HttpPost request = new HttpPost(ENDPOINT + entity);
 		request.setHeader("Content-Type", "application/json");
 		request.setHeader("X-Parse-Application-Id", APPLICATION_ID);
 		request.setHeader("X-Parse-REST-API-Key", CLIENT_KEY);
@@ -52,27 +54,29 @@ public class Backend {
 		request.setEntity(httpContent);
 		HttpResponse response = httpClient.execute(request);
 		HttpEntity responseEntity = response.getEntity();
-		return responseEntity.getContent();		
+		return responseEntity.getContent();
 	}
-	
-	public String findKeypair(String md5) throws BackendException, UnknownPlayerException {
-		Map<String,String> results = retrieveKeypairs();
+
+	public String findKeypair(String md5) throws BackendException,
+			UnknownPlayerException {
+		Map<String, String> results = retrieveKeypairs();
 		if (results.containsKey(md5)) {
 			return results.get(md5);
 		} else {
-			throw new UnknownPlayerException();	
+			throw new UnknownPlayerException();
 		}
-		
+
 	}
 
-	public Map<String,String> retrieveKeypairs() throws BackendException {
+	public Map<String, String> retrieveKeypairs() throws BackendException {
 		try {
-			String json = ParsingUtils.streamToString(doParseGet("classes/" + Keypair.REMOTE_CLASSNAME));
+			String json = ParsingUtils.streamToString(doParseGet("classes/"
+					+ Keypair.REMOTE_CLASSNAME));
 			Gson gson = new Gson();
 			KeyPairHolder holder = gson.fromJson(json, KeyPairHolder.class);
-			Map<String,String> secretMap = new HashMap<String,String>();
+			Map<String, String> secretMap = new HashMap<String, String>();
 			Keypair[] results = holder.getResults();
-			for (int i=0;i<results.length;i++) {
+			for (int i = 0; i < results.length; i++) {
 				secretMap.put(results[i].getMd5(), results[i].getSecret());
 			}
 			return secretMap;
@@ -82,11 +86,13 @@ public class Backend {
 			throw new BackendException(e);
 		}
 	}
-	
-	public String storeKeypair(String md5, String secret) throws BackendException {
+
+	public String storeKeypair(String md5, String secret)
+			throws BackendException {
 		try {
 			Keypair keyPair = new Keypair(md5, secret);
-			String json = ParsingUtils.streamToString(doParseStore("classes/" + Keypair.REMOTE_CLASSNAME, keyPair));
+			String json = ParsingUtils.streamToString(doParseStore("classes/"
+					+ Keypair.REMOTE_CLASSNAME, keyPair));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 			return response.getObjectId();
@@ -96,10 +102,11 @@ public class Backend {
 			throw new BackendException(e);
 		}
 	}
-	
+
 	public String log(DownloadActivity activity) throws BackendException {
 		try {
-			String json = ParsingUtils.streamToString(doParseStore("classes/" + DownloadActivity.REMOTE_CLASSNAME, activity));
+			String json = ParsingUtils.streamToString(doParseStore("classes/"
+					+ DownloadActivity.REMOTE_CLASSNAME, activity));
 			Gson gson = new Gson();
 			StoreResponse response = gson.fromJson(json, StoreResponse.class);
 			return response.getObjectId();

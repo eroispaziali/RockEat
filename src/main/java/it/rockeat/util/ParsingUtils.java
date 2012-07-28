@@ -12,47 +12,58 @@ public class ParsingUtils {
 
 	/**
 	 * Convert a wildcard string into a regular expression pattern.
-	 * @param wildcard the string containing wildcards
+	 * 
+	 * @param wildcard
+	 *            the string containing wildcards
 	 * @return the correspondent regular expression pattern
 	 */
-	public static String wildcardToRegex(String wildcard){
-		if (wildcard!=null) {
+	public static String wildcardToRegex(String wildcard) {
+		if (wildcard != null) {
 			StringBuffer s = new StringBuffer(wildcard.length());
 			s.append('^');
 			for (int i = 0, is = wildcard.length(); i < is; i++) {
 				char c = wildcard.charAt(i);
-				switch(c) {
+				switch (c) {
 				case '*':
 					s.append(".*");
 					break;
 				case '?':
 					s.append(".");
 					break;
-					// escape special regexp-characters
-				case '(': case ')': case '[': case ']': case '$':
-				case '^': case '.': case '{': case '}': case '|':
+				// escape special regexp-characters
+				case '(':
+				case ')':
+				case '[':
+				case ']':
+				case '$':
+				case '^':
+				case '.':
+				case '{':
+				case '}':
+				case '|':
 				case '\\':
 					s.append("\\");
 					s.append(c);
 					break;
 				default:
 					s.append(c);
-				break;
+					break;
 				}
 			}
 			s.append('$');
-			return(s.toString());
+			return (s.toString());
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Return a prefix-safe copy of the provided URL, cleaning up surrounding whitespaces 
-	 * Examples:
-	 * <ul> 
-	 * 	<li>"  https://google.com " -> "https://google.com"</li>
-	 *  <li>"www.google.com" -> "http://www.google.com"</li>
+	 * Return a prefix-safe copy of the provided URL, cleaning up surrounding
+	 * whitespaces Examples:
+	 * <ul>
+	 * <li>"  https://google.com " -> "https://google.com"</li>
+	 * <li>"www.google.com" -> "http://www.google.com"</li>
 	 * </ul>
+	 * 
 	 * @param url
 	 * @return
 	 */
@@ -62,7 +73,8 @@ public class ParsingUtils {
 			final String DEFAULT_PREFIX = "http";
 			url = url.trim();
 			if (StringUtils.contains(url, PREFIX_DELIMITER)) {
-				String urlBody = StringUtils.substringAfter(url, PREFIX_DELIMITER);
+				String urlBody = StringUtils.substringAfter(url,
+						PREFIX_DELIMITER);
 				if (StringUtils.isBlank(urlBody)) {
 					return StringUtils.EMPTY;
 				}
@@ -74,7 +86,7 @@ public class ParsingUtils {
 			return StringUtils.EMPTY;
 		}
 	}
-	
+
 	public static boolean isValidUrl(String url) {
 		try {
 			@SuppressWarnings("unused")
@@ -83,19 +95,20 @@ public class ParsingUtils {
 		} catch (MalformedURLException e) {
 			return false;
 		}
-		
+
 	}
-	
+
 	public static String streamToString(InputStream is) {
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		    StringBuilder sb = new StringBuilder();
-		    String line = null;
-		    while ((line = reader.readLine()) != null) {
-		      sb.append(line + "\n");
-		    }
-		    is.close();
-		    return sb.toString();
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(is));
+			StringBuilder sb = new StringBuilder();
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				sb.append(line + "\n");
+			}
+			is.close();
+			return sb.toString();
 		} catch (Exception e) {
 			return StringUtils.EMPTY;
 		}

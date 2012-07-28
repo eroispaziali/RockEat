@@ -16,11 +16,11 @@ public class ProxyHttpRoutePlanner implements HttpRoutePlanner {
 
 	private HttpHost proxy;
 	private Set<String> ignoredHosts = new HashSet<String>();
-	
+
 	public ProxyHttpRoutePlanner(HttpHost proxy) {
 		this.proxy = proxy;
 	}
-	
+
 	private boolean shouldBypassProxy(String url) {
 		if (url == null) {
 			return false;
@@ -31,18 +31,24 @@ public class ProxyHttpRoutePlanner implements HttpRoutePlanner {
 					if (url.matches(regexPattern)) {
 						return true;
 					}
-				} catch (PatternSyntaxException e) { /* invalid expression, just ignore */}
+				} catch (PatternSyntaxException e) { /*
+													 * invalid expression, just
+													 * ignore
+													 */
+				}
 			}
 			return false;
 		}
 		return false;
 	}
-	
+
 	@Override
-	public HttpRoute determineRoute(HttpHost httpHost, HttpRequest httpRequest, HttpContext httpContext) throws HttpException {
-		String uri =  httpRequest.getRequestLine().getUri();
-		Boolean secure = (httpHost.getSchemeName().equals("https")) ? true : false;
-		if (proxy!=null || shouldBypassProxy(uri)) {
+	public HttpRoute determineRoute(HttpHost httpHost, HttpRequest httpRequest,
+			HttpContext httpContext) throws HttpException {
+		String uri = httpRequest.getRequestLine().getUri();
+		Boolean secure = (httpHost.getSchemeName().equals("https")) ? true
+				: false;
+		if (proxy != null || shouldBypassProxy(uri)) {
 			return new HttpRoute(httpHost, null, proxy, secure);
 		} else {
 			return new HttpRoute(httpHost, null, secure);

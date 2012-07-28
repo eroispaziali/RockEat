@@ -32,64 +32,78 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class ConnectionManager {
-	
+
 	private final static Integer MaxRedirects = 10;
 	private final static Boolean AllowCircularRedirects = Boolean.FALSE;
 	private final static Integer httpConnectionTimeout = 10000;
 	private final static Integer httpSocketTimeout = 10000;
-	
-	@Inject private SettingsManager settingsManager;
-	
+
+	@Inject	private SettingsManager settingsManager;
+
 	private HttpParams createHttpParams() {
 		HttpParams params = new BasicHttpParams();
-        HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-        HttpProtocolParams.setContentCharset(params, "UTF-8");
-        HttpProtocolParams.setUseExpectContinue(params, true);
-        HttpProtocolParams.setUserAgent(params, settingsManager.getUserAgent());
-        params.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
-	    params.setIntParameter(ClientPNames.MAX_REDIRECTS, MaxRedirects);
-	    params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, AllowCircularRedirects);
-	    params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, httpSocketTimeout);
-	    params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, httpConnectionTimeout);
-	    return params;
+		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+		HttpProtocolParams.setContentCharset(params, "UTF-8");
+		HttpProtocolParams.setUseExpectContinue(params, true);
+		HttpProtocolParams.setUserAgent(params, settingsManager.getUserAgent());
+		params.setBooleanParameter(ClientPNames.HANDLE_REDIRECTS, true);
+		params.setIntParameter(ClientPNames.MAX_REDIRECTS, MaxRedirects);
+		params.setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS,
+				AllowCircularRedirects);
+		params.setIntParameter(CoreConnectionPNames.SO_TIMEOUT,
+				httpSocketTimeout);
+		params.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
+				httpConnectionTimeout);
+		return params;
 	}
-	
+
 	@SuppressWarnings("unused")
 	private static SchemeRegistry getSupportedSchemes() {
 		SchemeRegistry registry = new SchemeRegistry();
-		Scheme http = new Scheme("http", 80, PlainSocketFactory.getSocketFactory());
+		Scheme http = new Scheme("http", 80,
+				PlainSocketFactory.getSocketFactory());
 		registry.register(http);
 		SSLSocketFactory sf = SSLSocketFactory.getSocketFactory();
 		Scheme https = new Scheme("https", 443, sf);
 		registry.register(https);
 		return registry;
 	}
-	
+
 	public HttpClient createClient() {
-		if (BooleanUtils.isTrue(settingsManager.getSettings().getProxyEnabled())) {
-			Credentials credentials = new UsernamePasswordCredentials(settingsManager.getSettings().getProxyUsername(), settingsManager.getSettings().getProxyPassword());
-			return createClient(settingsManager.getSettings().getProxyHost(), credentials);
+		if (BooleanUtils
+				.isTrue(settingsManager.getSettings().getProxyEnabled())) {
+			Credentials credentials = new UsernamePasswordCredentials(
+					settingsManager.getSettings().getProxyUsername(),
+					settingsManager.getSettings().getProxyPassword());
+			return createClient(settingsManager.getSettings().getProxyHost(),
+					credentials);
 		} else {
-			 DefaultHttpClient httpclient = new DefaultHttpClient(createHttpParams());
-	        httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
-	        httpclient.addResponseInterceptor(new GzipHttpResponseInterceptor());
-	        return httpclient;
+			DefaultHttpClient httpclient = new DefaultHttpClient(
+					createHttpParams());
+			httpclient.addRequestInterceptor(new GzipHttpRequestInterceptor());
+			httpclient
+					.addResponseInterceptor(new GzipHttpResponseInterceptor());
+			return httpclient;
 		}
-       
+
 	}
-	
+
 	public HttpClient createClient(HttpHost proxy, Credentials credentials) {
-        DefaultHttpClient client = new DefaultHttpClient(createHttpParams());
-		client.getCredentialsProvider().setCredentials(new AuthScope(proxy.getHostName(), proxy.getPort()), credentials);
+		DefaultHttpClient client = new DefaultHttpClient(createHttpParams());
+		client.getCredentialsProvider().setCredentials(
+				new AuthScope(proxy.getHostName(), proxy.getPort()),
+				credentials);
 		client.setRoutePlanner(new ProxyHttpRoutePlanner(proxy));
 		System.getProperties().put("http.proxySet", "true");
 		System.getProperties().put("http.proxyHost", proxy.getHostName());
 		System.getProperties().put("http.proxyPort", proxy.getPort());
-		System.getProperties().put("http.proxyUser", credentials.getUserPrincipal());
-		System.getProperties().put("http.proxyPassword", credentials.getPassword());
+		System.getProperties().put("http.proxyUser",
+				credentials.getUserPrincipal());
+		System.getProperties().put("http.proxyPassword",
+				credentials.getPassword());
 		return client;
 	}
-	
+
 	public InputStream httpGet(String url) throws ConnectionException {
 		try {
 			HttpGet httpget = new HttpGet(url);
@@ -101,5 +115,5 @@ public class ConnectionManager {
 			throw new ConnectionException(e);
 		}
 	}
-	
+
 }

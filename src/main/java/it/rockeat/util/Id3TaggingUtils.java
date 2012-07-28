@@ -21,10 +21,12 @@ import com.mpatric.mp3agic.NotSupportedException;
 import com.mpatric.mp3agic.UnsupportedTagException;
 
 public class Id3TaggingUtils {
-	
+
 	private static void cleanupTags(Mp3File mp3file) {
-		ID3Wrapper oldId3Wrapper = new ID3Wrapper(mp3file.getId3v1Tag(), mp3file.getId3v2Tag());
-		ID3Wrapper newId3Wrapper = new ID3Wrapper(new ID3v1Tag(), new ID3v23Tag());
+		ID3Wrapper oldId3Wrapper = new ID3Wrapper(mp3file.getId3v1Tag(),
+				mp3file.getId3v2Tag());
+		ID3Wrapper newId3Wrapper = new ID3Wrapper(new ID3v1Tag(),
+				new ID3v23Tag());
 		newId3Wrapper.setTrack(StringUtils.trim(oldId3Wrapper.getTrack()));
 		newId3Wrapper.setArtist(StringUtils.trim(oldId3Wrapper.getArtist()));
 		newId3Wrapper.setTitle(StringUtils.trim(oldId3Wrapper.getTitle()));
@@ -32,20 +34,26 @@ public class Id3TaggingUtils {
 		newId3Wrapper.setAlbum(StringUtils.trim(oldId3Wrapper.getAlbum()));
 		newId3Wrapper.setYear(StringUtils.trim(oldId3Wrapper.getYear()));
 		newId3Wrapper.setGenre(oldId3Wrapper.getGenre());
-		newId3Wrapper.setComposer(StringUtils.trim(oldId3Wrapper.getComposer()));
-		newId3Wrapper.setOriginalArtist(StringUtils.trim(oldId3Wrapper.getOriginalArtist()));
-		newId3Wrapper.setCopyright(StringUtils.trim(oldId3Wrapper.getCopyright()));
+		newId3Wrapper
+				.setComposer(StringUtils.trim(oldId3Wrapper.getComposer()));
+		newId3Wrapper.setOriginalArtist(StringUtils.trim(oldId3Wrapper
+				.getOriginalArtist()));
+		newId3Wrapper.setCopyright(StringUtils.trim(oldId3Wrapper
+				.getCopyright()));
 		newId3Wrapper.setUrl(StringUtils.trim(oldId3Wrapper.getUrl()));
 		newId3Wrapper.getId3v2Tag().setPadding(true);
 		mp3file.setId3v1Tag(newId3Wrapper.getId3v1Tag());
 		mp3file.setId3v2Tag(newId3Wrapper.getId3v2Tag());
 	}
-	
-	public static void id3Tag(Album album, RockitTrack track, File fileOnDisk) throws Id3TaggingException {
+
+	public static void id3Tag(Album album, RockitTrack track, File fileOnDisk)
+			throws Id3TaggingException {
 		String originalFilename = fileOnDisk.getAbsolutePath();
-		String temporaryFilename =
-				FilenameUtils.getFullPath(fileOnDisk.getAbsolutePath()) + 
-				FilenameUtils.getBaseName(fileOnDisk.getName()) + "_tmp." + FilenameUtils.getExtension(fileOnDisk.getName());
+		String temporaryFilename = FilenameUtils.getFullPath(fileOnDisk
+				.getAbsolutePath())
+				+ FilenameUtils.getBaseName(fileOnDisk.getName())
+				+ "_tmp."
+				+ FilenameUtils.getExtension(fileOnDisk.getName());
 
 		File temporaryFile = new File(temporaryFilename);
 		File originalFile = new File(originalFilename);
@@ -58,13 +66,14 @@ public class Id3TaggingUtils {
 			tag.setArtist(track.getAuthor());
 			tag.setTitle(track.getTitle());
 			tag.setTrack(Integer.toString(track.getOrder()));
-			if (album.getArtwork()!=null) {
-				tag.setAlbumImage(FileManagementUtils.getBytesFromFile(album.getArtwork()), "cover");	
+			if (album.getArtwork() != null) {
+				tag.setAlbumImage(FileManagementUtils.getBytesFromFile(album
+						.getArtwork()), "cover");
 			}
-			
+
 			mp3file.setId3v2Tag(tag);
 			mp3file.save(temporaryFilename);
-			
+
 			// Replace with the new file
 			FileUtils.deleteQuietly(fileOnDisk);
 			FileUtils.moveFile(temporaryFile, originalFile);
@@ -83,7 +92,7 @@ public class Id3TaggingUtils {
 			throw new Id3TaggingException();
 		} catch (Exception e) {
 			FileUtils.deleteQuietly(temporaryFile);
-			throw new Id3TaggingException();			
+			throw new Id3TaggingException();
 		}
 	}
 

@@ -24,32 +24,33 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class SettingsManager {
-	
+
 	public static final String ROCKEAT_VERSION = "0.2.1";
 	public static final String ROCKEAT_DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11";
 	private static final String FILENAME = ".rockeat.xml";
 	private Settings settings = new Settings();
-	
-	@Inject private Backend backend;
-	
+
+	@Inject	private Backend backend;
+
 	public SettingsManager() {
 		loadFromFile();
 	}
-	
+
 	public void firstTimeInitialize() {
 		settings.setProxyEnabled(false);
-		settings.setProxyHost(new HttpHost("",8080));
+		settings.setProxyHost(new HttpHost("", 8080));
 		settings.setProxyUsername("");
 		settings.setProxyPassword("");
 		settings.setUid(RandomStringUtils.randomAlphanumeric(16));
 		settings.setUserAgent(ROCKEAT_DEFAULT_USER_AGENT);
 		saveToFile();
 	}
-	
+
 	public void loadFromFile() {
 		try {
 			FileReader reader = new FileReader(FILENAME);
-			settings = (Settings)Unmarshaller.unmarshal(Settings.class, reader);
+			settings = (Settings) Unmarshaller
+					.unmarshal(Settings.class, reader);
 		} catch (FileNotFoundException e) {
 			firstTimeInitialize();
 		} catch (MarshalException e) {
@@ -57,13 +58,13 @@ public class SettingsManager {
 		} catch (ValidationException e) {
 			firstTimeInitialize();
 		}
-		
+
 	}
-	
+
 	public void saveToFile() {
-	    try {
-	    	FileWriter writer = new FileWriter(FILENAME);
-	    	settings.setLastUpdated(Calendar.getInstance().getTime());
+		try {
+			FileWriter writer = new FileWriter(FILENAME);
+			settings.setLastUpdated(Calendar.getInstance().getTime());
 			Marshaller.marshal(settings, writer);
 		} catch (MarshalException e) {
 			/* silently ignore */
@@ -73,32 +74,33 @@ public class SettingsManager {
 			/* silently ignore */
 		}
 	}
-	
-	public String findKey(String md5) throws UnknownPlayerException, BackendException {
+
+	public String findKey(String md5) throws UnknownPlayerException,
+			BackendException {
 		Map<String, String> keypairs = settings.getKeypairs();
-    	if (keypairs.containsKey(md5)) {
-    		return keypairs.get(md5);
-    	} else {
-    		String key = backend.findKeypair(md5);
-    		keypairs.put(md5, key);
-    		saveToFile();
-    		return key;
-    	}
+		if (keypairs.containsKey(md5)) {
+			return keypairs.get(md5);
+		} else {
+			String key = backend.findKeypair(md5);
+			keypairs.put(md5, key);
+			saveToFile();
+			return key;
+		}
 	}
-	
+
 	public String getUserAgent() {
 		return settings.getUserAgent();
 	}
-	
+
 	public void addNewKey(String md5, String key) {
 		try {
 			Map<String, String> keyPairs = getSettings().getKeypairs();
 			backend.storeKeypair(md5, key);
-	        keyPairs.put(md5,key);
-	        saveToFile();
+			keyPairs.put(md5, key);
+			saveToFile();
 		} catch (BackendException e) {
 			/* silently ignore */
-		}		
+		}
 	}
 
 	public Settings getSettings() {

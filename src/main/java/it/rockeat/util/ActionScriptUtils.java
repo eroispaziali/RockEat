@@ -15,26 +15,22 @@ import com.jpexs.asdec.tags.DoABCTag;
 import com.jpexs.asdec.tags.Tag;
 
 /**
- *
+ * 
  * @author l.frattini
  */
 public class ActionScriptUtils {
 
-    public static void decompile(String filename, String outdir) throws FileNotFoundException, IOException {
-        FileInputStream fis = new FileInputStream(filename);
-        InputStream bis = new BufferedInputStream(fis);
-        SWF swf = new SWF(bis);
-        for (Tag t : swf.tags) {
-            if (t instanceof DoABCTag) {
-                DoABCTag tag = (DoABCTag) t;
-                tag.abc.export(outdir, false);
-            }
-        }
-    }
-    
-    
-    
-    
-    
-   
+	public static void decompile(String filename, String outdir)
+			throws FileNotFoundException, IOException {
+		FileInputStream fis = new FileInputStream(filename);
+		InputStream bis = new BufferedInputStream(fis);
+		SWF swf = new SWF(bis);
+		for (Tag t : swf.tags) {
+			if (t instanceof DoABCTag) {
+				DoABCTag tag = (DoABCTag) t;
+				tag.abc.export(outdir, false);
+			}
+		}
+	}
+
 }

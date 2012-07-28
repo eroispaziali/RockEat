@@ -1,7 +1,7 @@
 package it.rockeat.backend;
 
 public class KeyPairHolder {
-	
+
 	private Keypair[] results;
 
 	public Keypair[] getResults() {

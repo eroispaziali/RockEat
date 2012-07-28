@@ -14,50 +14,53 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
 public class ProxySettings {
-	
+
 	private HttpHost host;
 	private Credentials credentials;
 	private Set<String> ignoredHosts = new HashSet<String>();
-	
+
 	public ProxySettings(String optionLine) throws ProxySettingsException {
-		
+
 		String proxyUrl = StringUtils.EMPTY;
 		if (StringUtils.contains(optionLine, "@")) {
 
 			// With authentication
-			String credentialString = StringUtils.substringBefore(optionLine,"@");
-			String username = StringUtils.substringBefore(credentialString, ":");
+			String credentialString = StringUtils.substringBefore(optionLine,
+					"@");
+			String username = StringUtils
+					.substringBefore(credentialString, ":");
 			String password = StringUtils.substringAfter(credentialString, ":");
 			credentials = new UsernamePasswordCredentials(username, password);
-			
-			proxyUrl = StringUtils.substringAfter(optionLine,"@");
+
+			proxyUrl = StringUtils.substringAfter(optionLine, "@");
 		} else {
-			
+
 			// Without authentication
 			credentials = null;
 			proxyUrl = optionLine;
 		}
-		
+
 		try {
 			URL url = new URL(proxyUrl);
 			host = new HttpHost(url.getHost(), url.getPort(), "http");
 		} catch (MalformedURLException e) {
 			throw new ProxySettingsException(e);
 		}
-		
+
 	}
 
 	public void setIgnoredHostList(String ignoredHostsString) {
 		final String SEPARATORS = ";, ";
-		StringTokenizer tokens = new StringTokenizer(ignoredHostsString, SEPARATORS);
+		StringTokenizer tokens = new StringTokenizer(ignoredHostsString,
+				SEPARATORS);
 		while (tokens.hasMoreTokens()) {
 			String token = StringUtils.trim(tokens.nextToken());
-			String regex = ParsingUtils.wildcardToRegex(token).replace("$", "").concat("(:[0-9]{1,5})?(/(.+))*");
+			String regex = ParsingUtils.wildcardToRegex(token).replace("$", "")
+					.concat("(:[0-9]{1,5})?(/(.+))*");
 			ignoredHosts.add(regex);
 		}
 	}
 
-	
 	public HttpHost getHost() {
 		return host;
 	}
@@ -69,5 +72,5 @@ public class ProxySettings {
 	public Set<String> getIgnoredHosts() {
 		return ignoredHosts;
 	}
-	
+
 }
