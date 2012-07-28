@@ -26,6 +26,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.inject.Inject;
+
 public class RockEatCli {
 
 	private static final String DISABLE_TAGGING = "t";
@@ -33,6 +35,8 @@ public class RockEatCli {
 	private static final String EAT = "e";
 	private static final String TESTING = "c";
 	private static PrintStream out;
+	
+	@Inject	private Controller controller;
 
 	public RockEatCli() {
 		try {
@@ -47,7 +51,7 @@ public class RockEatCli {
 		formatter.printHelp("java -jar rockeat.jar", options);
 	}
 
-	public static void main(String[] args) {
+	public void execute(String[] args) {
 
 		try {
 			out = new PrintStream(System.out, true, "UTF-8");
@@ -68,7 +72,6 @@ public class RockEatCli {
 		try {
 			CommandLineParser parser = new GnuParser();
 			CommandLine commandLine = parser.parse(options, args);
-			Controller controller = new Controller();
 			controller.setId3TaggingEnabled(!commandLine
 					.hasOption(DISABLE_TAGGING));
 			if (commandLine.hasOption(URL)) {
@@ -116,6 +119,7 @@ public class RockEatCli {
 							}
 							String label = StringUtils.EMPTY;
 							if (controller.getDownloadedTracks() > 0) {
+								controller.downloadFinished(album);
 								label = Messages.DOWNLOAD_COMPLETE;
 								label = StringUtils.replace(label, "{0}", Long
 										.toString(controller

@@ -17,7 +17,8 @@ public class RockEat {
 		Injector injector = Guice.createInjector(new RockEatModule());
 
 		if (args.length > 0) {
-			RockEatCli.main(args);
+			RockEatCli cli = injector.getInstance(RockEatCli.class);
+			cli.execute(args);
 		} else {
 			try {
 				UIManager.setLookAndFeel(UIManager
