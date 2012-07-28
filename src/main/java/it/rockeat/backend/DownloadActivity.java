@@ -1,6 +1,6 @@
 package it.rockeat.backend;
 
-import it.rockeat.SettingsManager;
+import it.rockeat.RockEat;
 
 public class DownloadActivity {
 
@@ -18,7 +18,7 @@ public class DownloadActivity {
 	private String version;
 
 	public DownloadActivity() {
-		version = SettingsManager.ROCKEAT_VERSION;
+		version = RockEat.VERSION;
 	}
 
 	public Long getTracks() {

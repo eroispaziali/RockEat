@@ -25,7 +25,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class SettingsManager {
 
-	public static final String ROCKEAT_VERSION = "0.2.1";
 	public static final String ROCKEAT_DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11";
 	private static final String FILENAME = ".rockeat.xml";
 	private Settings settings = new Settings();
