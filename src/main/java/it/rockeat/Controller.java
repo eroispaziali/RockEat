@@ -8,9 +8,12 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.exception.UnknownSourceException;
 import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
+import it.rockeat.source.rockit.Rockit;
+import it.rockeat.source.soundcloud.SoundCloud;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
 import it.rockeat.util.ParsingUtils;
@@ -21,26 +24,50 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 
 public class Controller {
 
 	private Boolean id3TaggingEnabled = Boolean.TRUE;
 	private Long downloadedTracks = 0L;
 	private Long bytesDownloaded = 0L;
+	
+	private Map<String,Class<? extends MusicSource>> sources = new HashMap<String,Class<? extends MusicSource>>();
 
-	@Inject private MusicSource musicSource;
+	private MusicSource musicSource;
 	@Inject	private SettingsManager settingsManager;
 	@Inject	private Backend backend;
+	
+	
+	public Controller() {
+		sources.put("soundcloud.com", SoundCloud.class);
+		sources.put("www.soundcloud.com", SoundCloud.class);
+		sources.put("rockit.it", Rockit.class);
+		sources.put("www.rockit.it", Rockit.class);
+	}
 
 	public MusicSource tuneInSource(String url) throws BackendException,
-			ConnectionException, ParsingException, MalformedURLException {
-		musicSource.tuneIn(ParsingUtils.addProtocolPrefixIfMissing(url));
-		return musicSource;
+			ConnectionException, ParsingException, MalformedURLException, UnknownSourceException {
+		
+		Injector injector = Guice.createInjector();
+		URL parsedUrl = new URL(url);
+		String domain = parsedUrl.getHost(); 
+		if (sources.containsKey(domain)) {
+			Class<? extends MusicSource> sourceManager = sources.get(domain);
+			musicSource = injector.getInstance(sourceManager);
+			musicSource.tuneIn(ParsingUtils.addProtocolPrefixIfMissing(url));
+			return musicSource;
+		} else {
+			throw new UnknownSourceException("Sorgente non conosciuta");
+		}
 	}
 
 	public void clean() {
@@ -65,7 +92,7 @@ public class Controller {
 
 	@SuppressWarnings("unused")
 	public Album findAlbum(String url) throws BackendException,
-			MalformedURLException, ConnectionException, ParsingException {
+			MalformedURLException, ConnectionException, ParsingException, UnknownSourceException {
 		/* reset counters */
 		downloadedTracks = 0L;
 		bytesDownloaded = 0L;
@@ -81,7 +108,7 @@ public class Controller {
 
 	public void download(Album album, Track track)
 			throws BackendException, ConnectionException, DownloadException,
-			FileSaveException, MalformedURLException, ParsingException {
+			FileSaveException, MalformedURLException, ParsingException, UnknownSourceException {
 		MusicSource musicSource = tuneInSource(album.getUrl());
 		String folderName = FileManagementUtils.createFolder(album);
 		String filePath = folderName

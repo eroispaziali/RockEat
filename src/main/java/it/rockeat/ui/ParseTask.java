@@ -4,6 +4,7 @@ import it.rockeat.exception.BackendException;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.exception.UnknownPlayerException;
+import it.rockeat.exception.UnknownSourceException;
 import it.rockeat.model.Album;
 import it.rockeat.source.MusicSource;
 
@@ -54,12 +55,17 @@ public class ParseTask extends SwingWorker<Void, Void> {
 			setProgress(ImageObserver.ERROR);
 		} catch (UnknownPlayerException e) {
 			rockEatUI.reset();
-			JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_PLAYER,
+			JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_SOURCE,
 					Messages.TITLE, 0);
 			setProgress(ImageObserver.ERROR);
 		} catch (BackendException e) {
 			rockEatUI.reset();
 			JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_BACKEND,
+					Messages.TITLE, 0);
+			setProgress(ImageObserver.ERROR);
+		} catch (UnknownSourceException e) {
+			rockEatUI.reset();
+			JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_SOURCE,
 					Messages.TITLE, 0);
 			setProgress(ImageObserver.ERROR);
 		}

@@ -1,5 +1,7 @@
 package it.rockeat.model;
 
+import java.io.File;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class Track {
@@ -10,6 +12,7 @@ public class Track {
 	private String url;
 	private String album;
 	private String author;
+	private File artwork;
 
 	public Track() {
 		super();
@@ -71,6 +74,14 @@ public class Track {
 	public String toString() {
 		String string = "\"" + title + "\" di " + author;
 		return string;
+	}
+
+	public File getArtwork() {
+		return artwork;
+	}
+
+	public void setArtwork(File artwork) {
+		this.artwork = artwork;
 	}
 
 }

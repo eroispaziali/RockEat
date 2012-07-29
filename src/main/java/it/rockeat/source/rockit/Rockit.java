@@ -40,7 +40,9 @@ import org.jsoup.select.Elements;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.inject.Singleton;
 
+@Singleton
 public class Rockit extends SourceSupport {
 
 	public static final String ARTWORK_SELECTION_EXPRESSION = ".datialbum a";

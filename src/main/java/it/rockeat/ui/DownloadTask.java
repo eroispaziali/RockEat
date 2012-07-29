@@ -43,7 +43,7 @@ public class DownloadTask extends SwingWorker<Void, Void> {
 				setProgress(ImageObserver.ABORT);
 				rockEatUI.reset();
 			} catch (DownloadException e) {
-				JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_PLAYER,
+				JOptionPane.showMessageDialog(rockEatUI, Messages.ERROR_SOURCE,
 						Messages.TITLE, 0);
 				setProgress(ImageObserver.ABORT);
 				rockEatUI.reset();

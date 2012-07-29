@@ -6,6 +6,7 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
+import it.rockeat.exception.UnknownSourceException;
 import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
@@ -161,7 +162,9 @@ public class RockEatCli {
 		} catch (ConnectionException e) {
 			out.println(Messages.ERROR_CONNECTION);
 		} catch (BackendException e) {
-			out.println(Messages.ERROR_PLAYER);
+			out.println(Messages.ERROR_BACKEND);
+		} catch (UnknownSourceException e) {
+			out.println(Messages.ERROR_SOURCE);
 		} catch (ParseException exp) {
 			printHelp(options);
 		}

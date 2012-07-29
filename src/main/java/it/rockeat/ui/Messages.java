@@ -13,7 +13,7 @@ public class Messages {
 	public static final String ERROR_URL = "RockEat ha bisogno di un indirizzo web";
 	public static final String ERROR_CRAWLING = "RockEat non riesce a ispezionare nulla";
 	public static final String ERROR_UNEXPECTED = "RockEat ha riscontrato un errore del tutto inatteso";
-	public static final String ERROR_PLAYER = "RockEat non &egrave; in grado di scaricare tracce da qui";
+	public static final String ERROR_SOURCE = "RockEat non &egrave; in grado di scaricare tracce da qui";
 	public static final String ERROR_BACKEND = "RockEat non riesce a fare mente locale";
 	public static final String TEST_SUCCESS = "RockEat si sente in grado di scaricare tracce da qui";
 	public static final String TEST_ERROR = "RockEat non&egrave; in grado di scaricare tracce da qui";

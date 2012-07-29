@@ -2,6 +2,8 @@ package it.rockeat.source.soundcloud;
 
 import it.rockeat.model.Track;
 
+import org.apache.commons.lang3.BooleanUtils;
+
 public class ScTrack {
 
 	private String id;
@@ -57,7 +59,11 @@ public class ScTrack {
 		track.setTitle(title);
 		track.setAuthor(user.getUsername());
 		track.setId(id);
-		track.setUrl(stream_url);
+		if (BooleanUtils.isTrue(downloadable)) {
+			track.setUrl(download_url);
+		} else {
+			track.setUrl(stream_url);
+		}
 		return track;
 	}
 
