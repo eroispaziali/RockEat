@@ -88,7 +88,7 @@ public class ConnectionManager {
 
 	}
 
-	public HttpClient createClient(HttpHost proxy, Credentials credentials) {
+	private HttpClient createClient(HttpHost proxy, Credentials credentials) {
 		DefaultHttpClient client = new DefaultHttpClient(createHttpParams());
 		client.getCredentialsProvider().setCredentials(
 				new AuthScope(proxy.getHostName(), proxy.getPort()),

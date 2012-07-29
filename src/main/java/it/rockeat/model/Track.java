@@ -2,7 +2,7 @@ package it.rockeat.model;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class RockitTrack {
+public class Track {
 
 	private Integer order;
 	private String id;
@@ -11,7 +11,7 @@ public class RockitTrack {
 	private String album;
 	private String author;
 
-	public RockitTrack() {
+	public Track() {
 		super();
 	}
 

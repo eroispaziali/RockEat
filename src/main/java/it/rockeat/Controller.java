@@ -9,7 +9,7 @@ import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.Id3TaggingUtils;
@@ -79,7 +79,7 @@ public class Controller {
 		return album;
 	}
 
-	public void download(Album album, RockitTrack track)
+	public void download(Album album, Track track)
 			throws BackendException, ConnectionException, DownloadException,
 			FileSaveException, MalformedURLException, ParsingException {
 		MusicSource musicSource = tuneInSource(album.getUrl());

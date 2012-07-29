@@ -3,7 +3,7 @@ package it.rockeat.source;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 import it.rockeat.source.rockit.Rockit;
 
 import java.io.OutputStream;
@@ -21,7 +21,7 @@ public interface MusicSource {
 
 	public Album findAlbum() throws ParsingException;
 
-	public void download(RockitTrack track, OutputStream outputStream)
+	public void download(Track track, OutputStream outputStream)
 			throws ConnectionException;
 
 	public boolean runTest();

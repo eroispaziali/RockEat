@@ -1,13 +1,11 @@
 package it.rockeat.source.rockit;
 
-import it.rockeat.SettingsManager;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.http.ConnectionManager;
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
-import it.rockeat.source.MusicSource;
+import it.rockeat.model.Track;
+import it.rockeat.source.SourceSupport;
 import it.rockeat.util.ActionScriptUtils;
 import it.rockeat.util.FileManagementUtils;
 import it.rockeat.util.HashUtils;
@@ -35,19 +33,15 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.inject.Inject;
 
-public class Rockit implements MusicSource {
+public class Rockit extends SourceSupport {
 
 	public static final String ARTWORK_SELECTION_EXPRESSION = ".datialbum a";
 	public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
@@ -57,20 +51,13 @@ public class Rockit implements MusicSource {
 	public static final String TEMP_FILENAME = ".rockeat.tmp";
 	public static final String TEMP_FOLDER = ".rockeat/";
 	public static final String TOKEN_PARAM = "rockitID";
-
-	private Document document;
-	private File player;
-	private File artwork;
-	private String hash;
-	private String secret;
-	private String url;
-
-	@Inject private SettingsManager settingsManager;
-	@Inject	private ConnectionManager connectionManager;
-
 	public static final String TRACK_LOOKUP_URL = "http://www.rockit.it/web/include/ajax.play.php";
 
-	private static RockitTrack cleanup(RockitTrack track) {
+	private File player;
+	private String hash;
+	private String secret;
+	
+	private static Track cleanup(Track track) {
 		String cleanedTitle = track.getTitle();
 		track.setTitle(StringUtils.isNotBlank(cleanedTitle) ? StringUtils
 				.trim(cleanedTitle.replaceAll(" +", " ")) : cleanedTitle);
@@ -78,14 +65,14 @@ public class Rockit implements MusicSource {
 	}
 
 	private boolean isPlayerKnown(String md5) {
-		Map<String, String> keyPairs = settingsManager.getSettings()
+		Map<String, String> keyPairs = getSettingsManager().getSettings()
 				.getKeypairs();
 		return BooleanUtils.isTrue(keyPairs.containsKey(md5));
 	}
 
 	private String findSecretKey(String md5) throws ParsingException {
 		try {
-			String key = settingsManager.findKey(md5);
+			String key = getSettingsManager().findKey(md5);
 			FileUtils.deleteQuietly(player);
 			return key;
 		} catch (Exception e) {
@@ -98,7 +85,7 @@ public class Rockit implements MusicSource {
 				String line = FileManagementUtils.searchLine(source,
 						TOKEN_PARAM);
 				String key = StringUtils.substringBetween(line, "\"");
-				settingsManager.addNewKey(md5, key);
+				getSettingsManager().addNewKey(md5, key);
 				FileUtils.deleteQuietly(player);
 				FileUtils.deleteQuietly(new File(TEMP_FOLDER));
 				return key;
@@ -112,39 +99,34 @@ public class Rockit implements MusicSource {
 		}
 	}
 
-	private static RockitTrack getTrackFromJson(InputStream jsonStream) {
+	private static Track getTrackFromJson(InputStream jsonStream) {
 		String json = ParsingUtils.streamToString(jsonStream);
 		Gson gson = new Gson();
-		RockitTrack track = gson.fromJson(json, RockitTrack.class);
-		return track;
+		RockitTrack rockitTrack = gson.fromJson(json, RockitTrack.class);
+		return rockitTrack.toTrack();
 	}
 
-	public void tuneIn(String url) throws ConnectionException,
-			MalformedURLException, ParsingException {
-		if (!StringUtils.equals(url, this.url)) {
-			this.url = url;
-			document = fetchDocument();
-			player = fetchPlayer();
-			hash = HashUtils.md5(player);
-			secret = findSecretKey(hash);
-		}
+	@Override
+	public void tuneIn(String url) throws ConnectionException, MalformedURLException, ParsingException {
+		super.tuneIn(url);
+		player = fetchPlayer();
+		hash = HashUtils.md5(player);
+		secret = findSecretKey(hash);
 	}
 
 	@Override
 	public void release() {
-		url = null;
-		document = null;
+		super.release();
 		hash = null;
 		secret = null;
 		FileUtils.deleteQuietly(player);
-		FileUtils.deleteQuietly(artwork);
 	}
 
 	@Override
-	public void download(RockitTrack track, OutputStream out)
+	public void download(Track track, OutputStream out)
 			throws ConnectionException {
 		try {
-			HttpClient httpClient = connectionManager.createClient();
+			HttpClient httpClient = getConnectionManager().createClient();
 			HttpPost request = new HttpPost(track.getUrl());
 			request.setHeader("Referer", REFERER_VALUE);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
@@ -159,28 +141,15 @@ public class Rockit implements MusicSource {
 		}
 	}
 
-	private Document fetchDocument() throws ConnectionException {
-		try {
-			HttpClient httpClient = connectionManager.createClient();
-			HttpGet request = new HttpGet(url);
-			HttpResponse response = httpClient.execute(request);
-			HttpEntity responseEntity = response.getEntity();
-			InputStream pageStream = responseEntity.getContent();
-			return Jsoup.parse(ParsingUtils.streamToString(pageStream));
-		} catch (Exception e) {
-			throw new ConnectionException(e);
-		}
-	}
-
 	private File fetchPlayer() throws ConnectionException, ParsingException,
 			MalformedURLException {
-		URL parsedUrl = new URL(url);
-		Element playerEl = document.select(PLAYER_SELECTION_EXPRESSION).first();
+		URL parsedUrl = new URL(getUrl());
+		Element playerEl = getDocument().select(PLAYER_SELECTION_EXPRESSION).first();
 		String playerUrl;
 		if (playerEl != null && playerEl.hasAttr("src")) {
 			playerUrl = parsedUrl.getProtocol() + "://" + parsedUrl.getHost()
 					+ playerEl.attr("src");
-			InputStream playerData = connectionManager.httpGet(playerUrl);
+			InputStream playerData = getConnectionManager().httpGet(playerUrl);
 			try {
 				String filename = StringUtils
 						.substringAfterLast(playerUrl, "/");
@@ -196,10 +165,10 @@ public class Rockit implements MusicSource {
 		}
 	}
 
-	private RockitTrack lookupTrack(String id, String lookupUrl)
+	private Track lookupTrack(String id, String lookupUrl)
 			throws ConnectionException, LookupException {
 		try {
-			HttpClient httpClient = connectionManager.createClient();
+			HttpClient httpClient = getConnectionManager().createClient();
 			HttpPost request = new HttpPost(lookupUrl);
 			List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 			qparams.add(new BasicNameValuePair("id", id));
@@ -208,7 +177,7 @@ public class Rockit implements MusicSource {
 			HttpResponse response = httpClient.execute(request);
 			HttpEntity responseEntity = response.getEntity();
 			InputStream trackInformation = responseEntity.getContent();
-			RockitTrack track = cleanup(getTrackFromJson(trackInformation));
+			Track track = cleanup(getTrackFromJson(trackInformation));
 			return track;
 		} catch (IOException e) {
 			throw new ConnectionException(e);
@@ -220,7 +189,7 @@ public class Rockit implements MusicSource {
 	@Override
 	public void noticeDownloadSuccess() {
 		if (!isPlayerKnown(hash)) {
-			settingsManager.addNewKey(hash, secret);
+			getSettingsManager().addNewKey(hash, secret);
 		}
 	}
 
@@ -229,8 +198,8 @@ public class Rockit implements MusicSource {
 		Album album = new Album();
 		String albumTitle;
 		String albumArtist;
-		List<RockitTrack> tracks = new ArrayList<RockitTrack>();
-		Elements playlistEl = document
+		List<Track> tracks = new ArrayList<Track>();
+		Elements playlistEl = getDocument()
 				.select(PARSING_TRACK_SELECTION_EXPRESSION);
 		Integer trackNumber = 0;
 		if (CollectionUtils.isNotEmpty(playlistEl)) {
@@ -241,7 +210,7 @@ public class Rockit implements MusicSource {
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						trackNumber++;
-						RockitTrack track = lookupTrack(trackId,
+						Track track = lookupTrack(trackId,
 								TRACK_LOOKUP_URL);
 						track.setId(trackId);
 						track.setOrder(trackNumber);
@@ -255,7 +224,7 @@ public class Rockit implements MusicSource {
 			}
 
 			/* Title */
-			Elements title = document.select("title");
+			Elements title = getDocument().select("title");
 			if (CollectionUtils.isNotEmpty(title)) {
 				String meta = title.get(0).text();
 				final String separator = " - ";
@@ -272,25 +241,25 @@ public class Rockit implements MusicSource {
 				album.setTitle(albumTitle);
 			}
 			album.setTracks(tracks);
-			album.setUrl(url);
+			album.setUrl(getUrl());
 
 			/* Artwork */
-			Element artworkEl = document.select(ARTWORK_SELECTION_EXPRESSION)
+			Element artworkEl = getDocument().select(ARTWORK_SELECTION_EXPRESSION)
 					.first();
 			if (artworkEl != null && artworkEl.hasAttr("href")) {
 				try {
-					URL parsedUrl = new URL(url);
+					URL parsedUrl = new URL(getUrl());
 					String artworkUrl = parsedUrl.getProtocol() + "://"
 							+ parsedUrl.getHost() + artworkEl.attr("href");
-					InputStream artworkData = connectionManager
+					InputStream artworkData = getConnectionManager()
 							.httpGet(artworkUrl);
 					String filename = StringUtils.substringAfterLast(
 							artworkUrl, "/");
 					OutputStream tmpFile = new FileOutputStream(filename);
 					IOUtils.copy(artworkData, tmpFile);
 					tmpFile.close();
-					artwork = new File(filename);
-					album.setArtwork(artwork);
+					setArtwork(new File(filename));
+					album.setArtwork(getArtwork());
 				} catch (MalformedURLException e) {
 					/* silently ignore */
 				} catch (ConnectionException e) {

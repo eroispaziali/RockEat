@@ -1,7 +1,7 @@
 package it.rockeat.util;
 
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,16 +48,18 @@ public class FileManagementUtils {
 		}
 	}
 
-	public static String createFilename(Album album, RockitTrack track) {
+	public static String createFilename(Album album, Track track) {
 		String songTitle = StringUtils.trim(track.getTitle());
 		Integer howManyDigits = StringUtils.length(Integer
 				.toString(CollectionUtils.size(album.getTracks())));
+		
+		String extension = FilenameUtils.getExtension(track.getRemoteFilename());
 		String filename = StringUtils.leftPad(
 				Integer.toString(track.getOrder()), howManyDigits, "0")
 				+ " - "
 				+ escapeSpecialCharsFromFilename(songTitle)
 				+ "."
-				+ FilenameUtils.getExtension(track.getRemoteFilename());
+				+ (StringUtils.isNotBlank(extension) ? extension : "mp3");
 		return filename;
 	}
 

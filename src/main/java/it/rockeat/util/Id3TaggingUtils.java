@@ -2,7 +2,7 @@ package it.rockeat.util;
 
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class Id3TaggingUtils {
 		mp3file.setId3v2Tag(newId3Wrapper.getId3v2Tag());
 	}
 
-	public static void id3Tag(Album album, RockitTrack track, File fileOnDisk)
+	public static void id3Tag(Album album, Track track, File fileOnDisk)
 			throws Id3TaggingException {
 		String originalFilename = fileOnDisk.getAbsolutePath();
 		String temporaryFilename = FilenameUtils.getFullPath(fileOnDisk

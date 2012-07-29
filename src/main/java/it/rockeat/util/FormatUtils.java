@@ -1,7 +1,7 @@
 package it.rockeat.util;
 
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +15,7 @@ public class FormatUtils {
 		Integer maxLenTitle = 0;
 		Integer maxLenAuthor = 0;
 		Integer maxLenUrl = 0;
-		for (RockitTrack track : album.getTracks()) {
+		for (Track track : album.getTracks()) {
 			if (StringUtils.length(track.getTitle()) > maxLenTitle)
 				maxLenTitle = StringUtils.length(track.getTitle());
 			if (StringUtils.length(track.getAuthor()) > maxLenAuthor)
@@ -29,7 +29,7 @@ public class FormatUtils {
 				+ " | " + StringUtils.rightPad(album.getTitle(), cols, " ")
 				+ " |\n" + " + " + StringUtils.leftPad("", cols, "-") + " + ";
 		result += title + "\n";
-		for (RockitTrack track : album.getTracks()) {
+		for (Track track : album.getTracks()) {
 			String line = " | "
 					+ StringUtils.leftPad(Integer.toString(track.getOrder()),
 							howManyDigits, " ")

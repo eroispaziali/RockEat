@@ -3,7 +3,7 @@ package it.rockeat.ui;
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 
 import java.awt.image.ImageObserver;
 
@@ -32,7 +32,7 @@ public class DownloadTask extends SwingWorker<Void, Void> {
 		rockEatUI.getProgressBar().setStringPainted(true);
 
 		Integer count = 0;
-		for (RockitTrack track : album.getTracks()) {
+		for (Track track : album.getTracks()) {
 			label = track.toString();
 			try {
 				setProgress(++count);

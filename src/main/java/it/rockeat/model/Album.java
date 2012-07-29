@@ -13,7 +13,7 @@ public class Album {
 	private String label;
 	private String year;
 	private String genre;
-	private List<RockitTrack> tracks;
+	private List<Track> tracks;
 	private String url;
 	private File artwork;
 
@@ -49,11 +49,11 @@ public class Album {
 		this.year = year;
 	}
 
-	public List<RockitTrack> getTracks() {
+	public List<Track> getTracks() {
 		return tracks;
 	}
 
-	public void setTracks(List<RockitTrack> tracks) {
+	public void setTracks(List<Track> tracks) {
 		this.tracks = tracks;
 	}
 

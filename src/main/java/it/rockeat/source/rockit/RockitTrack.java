@@ -1,5 +1,7 @@
 package it.rockeat.source.rockit;
 
+import it.rockeat.model.Track;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class RockitTrack {
@@ -71,6 +73,17 @@ public class RockitTrack {
 	public String toString() {
 		String string = "\"" + title + "\" di " + author;
 		return string;
+	}
+	
+	public Track toTrack() {
+		Track track = new Track();
+		track.setTitle(title);
+		track.setAuthor(author);
+		track.setOrder(order);
+		track.setUrl(url);
+		track.setId(id);
+		track.setAlbum(album);
+		return track;
 	}
 
 }

@@ -7,7 +7,7 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.model.Album;
-import it.rockeat.model.RockitTrack;
+import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
 import it.rockeat.util.FormatUtils;
 
@@ -96,7 +96,7 @@ public class RockEatCli {
 						if (commandLine.hasOption(EAT)) {
 							Integer progress = 0;
 							Integer count = album.getTracksCount();
-							for (RockitTrack track : album.getTracks()) {
+							for (Track track : album.getTracks()) {
 								progress++;
 								String st = StringUtils.leftPad(">",
 										progress + 1, "=")
