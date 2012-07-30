@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-public class Album {
+public class Playlist {
 
 	private String title;
 	private String artist;

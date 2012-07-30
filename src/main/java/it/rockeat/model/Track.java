@@ -13,6 +13,7 @@ public class Track {
 	private String album;
 	private String author;
 	private File artwork;
+	private Playlist playlist;
 
 	public Track() {
 		super();
@@ -82,6 +83,14 @@ public class Track {
 
 	public void setArtwork(File artwork) {
 		this.artwork = artwork;
+	}
+
+	public Playlist getPlaylist() {
+		return playlist;
+	}
+
+	public void setPlaylist(Playlist playlist) {
+		this.playlist = playlist;
 	}
 
 }

@@ -2,7 +2,7 @@ package it.rockeat.source.soundcloud;
 
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.Album;
+import it.rockeat.model.Playlist;
 import it.rockeat.model.Track;
 import it.rockeat.source.SourceSupport;
 import it.rockeat.util.ParsingUtils;
@@ -49,7 +49,7 @@ public class SoundCloud extends SourceSupport {
 		return soundCloudTrack.toTrack();
 	}
 	
-	public Track lookup(String trackId) throws ClientProtocolException, IOException  {
+	private Track lookup(String trackId) throws ClientProtocolException, IOException  {
 		HttpClient httpClient = getConnectionManager().createClient();
 		List<NameValuePair> qparams = new ArrayList<NameValuePair>();
 		qparams.add(new BasicNameValuePair("client_id", CLIENT_ID));
@@ -67,8 +67,8 @@ public class SoundCloud extends SourceSupport {
 	}
 	
 	@Override
-	public Album findAlbum() throws ParsingException {
-		Album album = new Album();
+	public Playlist findTracks() throws ParsingException {
+		Playlist playlist = new Playlist();
 		String albumTitle = "Qualche traccia";
 		String albumArtist = "Artisti vari";
 		List<Track> tracks = new ArrayList<Track>();
@@ -85,6 +85,7 @@ public class SoundCloud extends SourceSupport {
 						Track track = lookup(trackId);					
 						track.setId(trackId);
 						track.setOrder(trackNumber);
+						track.setPlaylist(playlist);
 						tracks.add(track);
 						trackMap.put(trackId,track);
 					} catch (IOException e) {
@@ -95,10 +96,10 @@ public class SoundCloud extends SourceSupport {
 		}
 		
 		/* TODO: download artwork */
-		album.setTitle(albumTitle);
-		album.setArtist(albumArtist);
-		album.setTracks(tracks);
-		return album;
+		playlist.setTitle(albumTitle);
+		playlist.setArtist(albumArtist);
+		playlist.setTracks(tracks);
+		return playlist;
 	}
 
 	private String urlEncode(String resource, List<NameValuePair> params) {

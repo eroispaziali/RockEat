@@ -3,7 +3,7 @@ package it.rockeat.source.rockit;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.Album;
+import it.rockeat.model.Playlist;
 import it.rockeat.model.Track;
 import it.rockeat.source.SourceSupport;
 import it.rockeat.util.ActionScriptUtils;
@@ -196,8 +196,8 @@ public class Rockit extends SourceSupport {
 	}
 
 	@Override
-	public Album findAlbum() throws ParsingException {
-		Album album = new Album();
+	public Playlist findTracks() throws ParsingException {
+		Playlist playlist = new Playlist();
 		String albumTitle;
 		String albumArtist;
 		List<Track> tracks = new ArrayList<Track>();
@@ -216,6 +216,7 @@ public class Rockit extends SourceSupport {
 								TRACK_LOOKUP_URL);
 						track.setId(trackId);
 						track.setOrder(trackNumber);
+						track.setPlaylist(playlist);
 						tracks.add(track);
 					} catch (ConnectionException e) {
 						throw new ParsingException(e);
@@ -239,11 +240,11 @@ public class Rockit extends SourceSupport {
 					albumArtist = meta;
 					albumTitle = "Qualche canzone";
 				}
-				album.setArtist(albumArtist);
-				album.setTitle(albumTitle);
+				playlist.setArtist(albumArtist);
+				playlist.setTitle(albumTitle);
 			}
-			album.setTracks(tracks);
-			album.setUrl(getUrl());
+			playlist.setTracks(tracks);
+			playlist.setUrl(getUrl());
 
 			/* Artwork */
 			Element artworkEl = getDocument().select(ARTWORK_SELECTION_EXPRESSION)
@@ -261,7 +262,7 @@ public class Rockit extends SourceSupport {
 					IOUtils.copy(artworkData, tmpFile);
 					tmpFile.close();
 					setArtwork(new File(filename));
-					album.setArtwork(getArtwork());
+					playlist.setArtwork(getArtwork());
 				} catch (MalformedURLException e) {
 					/* silently ignore */
 				} catch (ConnectionException e) {
@@ -271,7 +272,7 @@ public class Rockit extends SourceSupport {
 				}
 			}
 
-			return album;
+			return playlist;
 		} else {
 			/* Nothing found */
 			throw new ParsingException();
