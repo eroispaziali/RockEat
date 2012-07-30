@@ -58,6 +58,7 @@ public class Rockit extends SourceSupport {
 	private File player;
 	private String hash;
 	private String secret;
+	private Gson gson = new Gson();
 	
 	private static Track cleanup(Track track) {
 		String cleanedTitle = track.getTitle();
@@ -101,9 +102,8 @@ public class Rockit extends SourceSupport {
 		}
 	}
 
-	private static Track getTrackFromJson(InputStream jsonStream) {
+	private Track getTrackFromJson(InputStream jsonStream) {
 		String json = ParsingUtils.streamToString(jsonStream);
-		Gson gson = new Gson();
 		RockitTrack rockitTrack = gson.fromJson(json, RockitTrack.class);
 		return rockitTrack.toTrack();
 	}

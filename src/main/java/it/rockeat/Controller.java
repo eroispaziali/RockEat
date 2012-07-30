@@ -12,6 +12,7 @@ import it.rockeat.exception.UnknownSourceException;
 import it.rockeat.model.Playlist;
 import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
+import it.rockeat.source.bandcamp.Bandcamp;
 import it.rockeat.source.rockit.Rockit;
 import it.rockeat.source.soundcloud.SoundCloud;
 import it.rockeat.util.FileManagementUtils;
@@ -50,6 +51,7 @@ public class Controller {
 	public Controller() {
 		sources.put("soundcloud.com", SoundCloud.class);
 		sources.put("rockit.it", Rockit.class);
+		sources.put("makemine.bandcamp.com", Bandcamp.class);
 	}
 
 	public MusicSource tuneInSource(String url) throws BackendException,

@@ -41,10 +41,10 @@ public class SoundCloud extends SourceSupport {
 	private static final String PARSING_TRACK_SELECTION_EXPRESSION = "div[data-sc-track]";
 	
 	private Map<String,Track> trackMap = new HashMap<String,Track>();
+	private Gson gson = new Gson();
 	
-	private static Track getTrackFromJson(InputStream jsonStream) {
+	private Track getTrackFromJson(InputStream jsonStream) {
 		String json = ParsingUtils.streamToString(jsonStream);
-		Gson gson = new Gson();
 		ScTrack soundCloudTrack = gson.fromJson(json, ScTrack.class);
 		return soundCloudTrack.toTrack();
 	}

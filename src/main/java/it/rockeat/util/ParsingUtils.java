@@ -3,8 +3,10 @@ package it.rockeat.util;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -124,5 +126,17 @@ public class ParsingUtils {
 			return StringUtils.EMPTY;
 		}
 	}
+	
+	 public static String toUrlEncodedCommaSeparatedList(Object[] objects) {
+        StringBuilder params = new StringBuilder();
+        for (Object object : objects) {
+            try {
+                params.append(URLEncoder.encode(object.toString(), "UTF-8"));
+                params.append(',');
+            } catch (UnsupportedEncodingException e) { }
+        }
+        return (params.length() > 0 ? params.substring(0, params.length() - 1) : params.toString());
+	}
+
 
 }
