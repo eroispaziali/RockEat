@@ -3,29 +3,29 @@ package it.rockeat.source.bandcamp;
 import java.util.List;
 
 public class BcAlbum {
-	private long albumId;
-	private long bandId;
+	private long album_id;
+	private long band_id;
 	private String artist;
 	private String title;
 	private String url;
 	private String about;
 	private String credits;
-	private String smallArtUrl;
-	private String largeArtUrl;
-	private long releaseDate;
+	private String small_art_url;
+	private String large_art_url;
+	private long release_date;
 	private int downloadable;
 	private List<BcTrack> tracks;
 	public long getAlbumId() {
-		return albumId;
+		return album_id;
 	}
 	public void setAlbumId(long albumId) {
-		this.albumId = albumId;
+		this.album_id = albumId;
 	}
 	public long getBandId() {
-		return bandId;
+		return band_id;
 	}
 	public void setBandId(long bandId) {
-		this.bandId = bandId;
+		this.band_id = bandId;
 	}
 	public String getArtist() {
 		return artist;
@@ -58,22 +58,22 @@ public class BcAlbum {
 		this.credits = credits;
 	}
 	public String getSmallArtUrl() {
-		return smallArtUrl;
+		return small_art_url;
 	}
 	public void setSmallArtUrl(String smallArtUrl) {
-		this.smallArtUrl = smallArtUrl;
+		this.small_art_url = smallArtUrl;
 	}
 	public String getLargeArtUrl() {
-		return largeArtUrl;
+		return large_art_url;
 	}
 	public void setLargeArtUrl(String largeArtUrl) {
-		this.largeArtUrl = largeArtUrl;
+		this.large_art_url = largeArtUrl;
 	}
 	public long getReleaseDate() {
-		return releaseDate;
+		return release_date;
 	}
 	public void setReleaseDate(long releaseDate) {
-		this.releaseDate = releaseDate;
+		this.release_date = releaseDate;
 	}
 	public int getDownloadable() {
 		return downloadable;

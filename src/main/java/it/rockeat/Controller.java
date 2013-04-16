@@ -9,7 +9,7 @@ import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.Id3TaggingException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.exception.UnknownSourceException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
 import it.rockeat.source.bandcamp.Bandcamp;
@@ -51,7 +51,7 @@ public class Controller {
 	public Controller() {
 		sources.put("soundcloud.com", SoundCloud.class);
 		sources.put("rockit.it", Rockit.class);
-		sources.put("makemine.bandcamp.com", Bandcamp.class);
+		sources.put("edipo.bandcamp.com", Bandcamp.class);
 	}
 
 	public MusicSource tuneInSource(String url) throws BackendException,
@@ -73,7 +73,7 @@ public class Controller {
 		musicSource.release();
 	}
 
-	public void downloadFinished(Playlist album) {
+	public void downloadFinished(Album album) {
 		clean();
 		DownloadActivity downloadActivity = new DownloadActivity();
 		downloadActivity.setTitle(album.getTitle());
@@ -90,7 +90,7 @@ public class Controller {
 	}
 
 	@SuppressWarnings("unused")
-	public Playlist findTracks(String url) throws BackendException,
+	public Album findTracks(String url) throws BackendException,
 			MalformedURLException, ConnectionException, ParsingException, UnknownSourceException {
 		/* reset counters */
 		downloadedTracks = 0L;
@@ -100,7 +100,7 @@ public class Controller {
 		url = ParsingUtils.addProtocolPrefixIfMissing(url);
 		URL parsedUrl = new URL(url);
 		MusicSource musicSource = tuneInSource(url);
-		Playlist playlist = musicSource.findTracks();
+		Album playlist = musicSource.findTracks();
 		playlist.setUrl(url);
 		return playlist;
 	}
@@ -108,7 +108,7 @@ public class Controller {
 	public void download(Track track)
 			throws BackendException, ConnectionException, DownloadException,
 			FileSaveException, MalformedURLException, ParsingException, UnknownSourceException {
-		Playlist playlist = track.getPlaylist();
+		Album playlist = track.getPlaylist();
 		MusicSource musicSource = tuneInSource(playlist.getUrl());
 		String folderName = FileManagementUtils.createFolder(playlist);
 		String filePath = folderName

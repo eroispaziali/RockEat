@@ -3,7 +3,7 @@ package it.rockeat.source.rockit;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.LookupException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 import it.rockeat.source.SourceSupport;
 import it.rockeat.util.ActionScriptUtils;
@@ -46,7 +46,8 @@ import com.google.inject.Singleton;
 public class Rockit extends SourceSupport {
 
 	public static final String ARTWORK_SELECTION_EXPRESSION = ".datialbum a";
-	public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
+	//public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.play a";
+	public static final String PARSING_TRACK_SELECTION_EXPRESSION = "ul.items li.title a";
 	public static final String PLAYER_SELECTION_EXPRESSION = "div.player embed[type=application/x-shockwave-flash]";
 	public static final String PLAYER_SOURCE_FILE = "rockitPlayer.as";
 	public static final String REFERER_VALUE = "http://www.rockit.it/web/js/player3.swf";
@@ -114,6 +115,7 @@ public class Rockit extends SourceSupport {
 		player = fetchPlayer();
 		hash = HashUtils.md5(player);
 		secret = findSecretKey(hash);
+		System.out.println(secret);
 	}
 
 	@Override
@@ -196,8 +198,8 @@ public class Rockit extends SourceSupport {
 	}
 
 	@Override
-	public Playlist findTracks() throws ParsingException {
-		Playlist playlist = new Playlist();
+	public Album findTracks() throws ParsingException {
+		Album playlist = new Album();
 		String albumTitle;
 		String albumArtist;
 		List<Track> tracks = new ArrayList<Track>();
@@ -208,7 +210,8 @@ public class Rockit extends SourceSupport {
 
 			/* Tracks */
 			for (Element trackEl : playlistEl) {
-				String trackId = trackEl.attr("rel");
+				//String trackId = trackEl.attr("rel");
+				String trackId = StringUtils.substringAfterLast(trackEl.attr("href"),"/");
 				if (StringUtils.isNotBlank(trackId)) {
 					try {
 						trackNumber++;

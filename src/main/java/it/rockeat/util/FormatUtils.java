@@ -1,6 +1,6 @@
 package it.rockeat.util;
 
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class FormatUtils {
 
-	public static String formatAlbumData(Playlist album) {
+	public static String formatAlbumData(Album album) {
 		String result = StringUtils.EMPTY;
 		Integer howManyDigits = StringUtils.length(Integer
 				.toString(CollectionUtils.size(album.getTracks())));

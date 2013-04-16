@@ -2,7 +2,7 @@ package it.rockeat.source;
 
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 
 import java.io.OutputStream;
@@ -15,7 +15,7 @@ public interface MusicSource {
 
 	public void release();
 
-	public Playlist findTracks() throws ParsingException;
+	public Album findTracks() throws ParsingException;
 
 	public void download(Track track, OutputStream outputStream)
 			throws ConnectionException;

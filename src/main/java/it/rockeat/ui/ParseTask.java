@@ -5,7 +5,7 @@ import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.exception.UnknownPlayerException;
 import it.rockeat.exception.UnknownSourceException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.source.MusicSource;
 
 import java.awt.image.ImageObserver;
@@ -18,7 +18,7 @@ import org.apache.commons.lang3.BooleanUtils;
 
 public class ParseTask extends SwingWorker<Void, Void> {
 
-	private Playlist album;
+	private Album album;
 	private String url;
 	private RockEatUI rockEatUI;
 

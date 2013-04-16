@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.util.HashUtils;
 
 import java.io.File;

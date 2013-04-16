@@ -2,7 +2,7 @@ package it.rockeat.source.soundcloud;
 
 import it.rockeat.exception.ConnectionException;
 import it.rockeat.exception.ParsingException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 import it.rockeat.source.SourceSupport;
 import it.rockeat.util.ParsingUtils;
@@ -67,8 +67,8 @@ public class SoundCloud extends SourceSupport {
 	}
 	
 	@Override
-	public Playlist findTracks() throws ParsingException {
-		Playlist playlist = new Playlist();
+	public Album findTracks() throws ParsingException {
+		Album playlist = new Album();
 		String albumTitle = "Qualche traccia";
 		String albumArtist = "Artisti vari";
 		List<Track> tracks = new ArrayList<Track>();

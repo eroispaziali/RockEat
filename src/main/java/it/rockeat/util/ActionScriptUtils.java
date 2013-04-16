@@ -14,10 +14,6 @@ import com.jpexs.asdec.SWF;
 import com.jpexs.asdec.tags.DoABCTag;
 import com.jpexs.asdec.tags.Tag;
 
-/**
- * 
- * @author l.frattini
- */
 public class ActionScriptUtils {
 
 	public static void decompile(String filename, String outdir)

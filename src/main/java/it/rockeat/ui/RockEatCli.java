@@ -7,7 +7,7 @@ import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
 import it.rockeat.exception.ParsingException;
 import it.rockeat.exception.UnknownSourceException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 import it.rockeat.source.MusicSource;
 import it.rockeat.util.FormatUtils;
@@ -91,7 +91,7 @@ public class RockEatCli {
 						}
 					} else {
 						out.println(Messages.PARSE_IN_PROGRESS);
-						Playlist album = controller.findTracks(url);
+						Album album = controller.findTracks(url);
 						out.println(FormatUtils.formatAlbumData(album));
 
 						if (commandLine.hasOption(EAT)) {

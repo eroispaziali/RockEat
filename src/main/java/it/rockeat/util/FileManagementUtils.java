@@ -1,6 +1,6 @@
 package it.rockeat.util;
 
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 
 import java.io.File;
@@ -30,7 +30,7 @@ public class FileManagementUtils {
 		return filename;
 	}
 
-	public static String createFolder(Playlist album) {
+	public static String createFolder(Album album) {
 		try {
 			String folderPath = StringUtils.EMPTY;
 			if (StringUtils.isNotBlank(album.getArtist())
@@ -49,7 +49,7 @@ public class FileManagementUtils {
 	}
 
 	public static String createFilename(Track track) {
-		Playlist playlist = track.getPlaylist();
+		Album playlist = track.getPlaylist();
 		String songTitle = StringUtils.trim(track.getTitle());
 		Integer howManyDigits = StringUtils.length(Integer
 				.toString(CollectionUtils.size(playlist.getTracks())));

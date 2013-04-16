@@ -2,7 +2,7 @@ package it.rockeat.ui;
 
 import it.rockeat.exception.DownloadException;
 import it.rockeat.exception.FileSaveException;
-import it.rockeat.model.Playlist;
+import it.rockeat.model.Album;
 import it.rockeat.model.Track;
 
 import java.awt.image.ImageObserver;
@@ -15,11 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 
 public class DownloadTask extends SwingWorker<Void, Void> {
 
-	private Playlist album;
+	private Album album;
 	private RockEatUI rockEatUI;
 	private String label;
 
-	public DownloadTask(RockEatUI jRockEatUI, Playlist album) {
+	public DownloadTask(RockEatUI jRockEatUI, Album album) {
 		this.album = album;
 		this.rockEatUI = jRockEatUI;
 	}
